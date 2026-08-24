@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The bridge deck is navy in the brand. On the dark theme the background
+         is also navy, so the deck is drawn in the surface colour instead: the
+         shape reads, the brand still holds. -->
+    <color name="setu_logo_deck">#E7EAF0</color>
+</resources>

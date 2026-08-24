@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brand tokens from docs/07-ui-spec.md, sampled from assets/Setu-Logo.jpeg. -->
+<resources>
+    <color name="setu_orange">#F39F0B</color>
+    <color name="setu_green">#15A44A</color>
+    <color name="setu_navy">#1C2536</color>
+    <color name="setu_surface">#F6F7FB</color>
+    <color name="setu_white">#FFFFFF</color>
+    <color name="setu_grey">#6B7280</color>
+    <color name="setu_dark_bg">#111827</color>
+    <color name="setu_dark_card">#1C2536</color>
+    <color name="setu_logo_deck">#1C2536</color>
+</resources>

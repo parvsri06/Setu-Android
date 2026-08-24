@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brand mark from assets/Setu-Logo.jpeg: an orange outer arch and a green
+     inner arch nested over a navy deck. Redrawn as a vector rather than
+     packaged as a bitmap — the JPEG costs ~10 KB per density and cannot be
+     recoloured for the dark theme. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#F39F0B" android:strokeWidth="2.6"
+        android:fillColor="#00000000" android:strokeLineCap="butt"
+        android:pathData="M3.6,17a8.4,8.4 0 0 1 16.8,0" />
+    <path android:strokeColor="#15A44A" android:strokeWidth="2.6"
+        android:fillColor="#00000000" android:strokeLineCap="butt"
+        android:pathData="M8.2,17a3.8,3.8 0 0 1 7.6,0" />
+    <path android:fillColor="@color/setu_logo_deck"
+        android:pathData="M2.6,16.6h18.8a1.2,1.2 0 0 1 0,2.4H2.6a1.2,1.2 0 0 1 0,-2.4z" />
+</vector>

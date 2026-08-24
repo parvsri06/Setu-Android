@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Setu" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/setu_dark_bg</item>
+        <item name="android:statusBarColor">@color/setu_dark_bg</item>
+    </style>
+</resources>

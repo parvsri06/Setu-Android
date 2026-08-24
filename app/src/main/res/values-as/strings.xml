@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_next">পিছৰ</string>
+    <string name="action_back">উভতি যাওক</string>
+    <string name="action_close">বন্ধ কৰক</string>
+
+    <string name="notif_channel_name">ৰিলে</string>
+    <string name="notif_channel_desc">Setu-এ বাৰ্তা কঢ়িয়াই থকা দেখুৱায়</string>
+    <string name="notif_relay_title">Setu ৰিলে চলি আছে</string>
+    <string name="notif_relay_text">ওচৰত %1$d টা ফোন · %2$d টা বাৰ্তা কঢ়িয়াই আছে</string>
+
+    <string name="lang_title">আপোনাৰ ভাষা বাছনি কৰক</string>
+
+    <string name="consent_title">Setu-এ কি কৰে</string>
+    <string name="consent_body_1">নেটৱৰ্ক নাথাকিলে Setu-এ ব্লুটুথৰ যোগেদি এটা ফোনৰ পৰা আন এটা ফোনলৈ সৰু বাৰ্তা পঠিয়াই দিয়ে।</string>
+    <string name="consent_body_2">আপোনাৰ ফোনে আনৰ বাৰ্তাও কঢ়িয়াই লৈ যাব। সেইবোৰ এনক্ৰিপ্ট কৰা। আপোনাৰ ফোনে সেইবোৰ পঢ়িব নোৱাৰে।</string>
+    <string name="consent_body_3">আপোনাৰ অৱস্থান কেৱল SOS-ৰ ভিতৰত যায়, আৰু কেৱল উদ্ধাৰকাৰীয়েহে সেয়া খুলিব পাৰে।</string>
+    <string name="consent_purpose">কেৱল জৰুৰীকালীন বাৰ্তা পঠিয়াবলৈহে ব্যৱহাৰ হয়। সময় শেষ হ\'লে বাৰ্তা মচি পেলোৱা হয়। আপুনি যিকোনো সময়তে ৰিলে বন্ধ কৰিব পাৰে।</string>
+    <string name="consent_agree">মই বুজি পালোঁ আৰু সন্মত</string>
+
+    <string name="perm_title">অনুমতি</string>
+    <string name="perm_body">ওচৰৰ ফোন বিচাৰিবলৈ Setu-ৰ ব্লুটুথ লাগে, আৰু আপোনাৰ SOS-ত অৱস্থান যোগ কৰিবলৈ লোকেচন লাগে।</string>
+    <string name="perm_grant">অনুমতি দিয়ক</string>
+    <string name="perm_missing">কিছুমান অনুমতি পোৱা নগ\'ল। সেইবোৰ নোহোৱাকৈ ৰিলে চলিব নোৱাৰে।</string>
+    <string name="perm_granted">সকলো অনুমতি পোৱা গ\'ল</string>
+
+    <string name="battery_title">Setu চলি থাকিব দিয়ক</string>
+    <string name="battery_body">বহুতো ফোনে বেটাৰী ৰাখিবলৈ পটভূমিৰ এপ্ বন্ধ কৰি দিয়ে। স্ক্ৰীন বন্ধ থাকিলেও Setu চলি থাকিব লাগিব। অনুগ্ৰহ কৰি ইয়াক বাধা নিদিব।</string>
+    <string name="battery_open">বেটাৰী ছেটিংছ খোলক</string>
+    <string name="battery_skip">এতিয়া নালাগে</string>
+    <string name="battery_done">হ\'ল</string>
+
+    <string name="home_nearby">ওচৰত %1$d টা ফোন</string>
+    <string name="home_nearby_none">এতিয়ালৈকে ওচৰত কোনো ফোন নাই</string>
+    <string name="home_sos">SOS</string>
+    <string name="home_safe">মই সুৰক্ষিত</string>
+    <string name="home_carrying">আনৰ %1$d টা বাৰ্তা কঢ়িয়াই আছে</string>
+    <string name="home_relay_on">ৰিলে চালু</string>
+    <string name="home_relay_off">ৰিলে বন্ধ</string>
+    <string name="home_start">ৰিলে চালু কৰক</string>
+    <string name="home_stop">ৰিলে বন্ধ কৰক</string>
+    <string name="home_bt_off">ব্লুটুথ বন্ধ আছে</string>
+    <string name="home_location_off">লোকেচন বন্ধ — ব্লুটুথে ফোন বিচাৰিব নোৱাৰে</string>
+    <string name="home_diagnostics">কাৰিকৰী তথ্য</string>
+
+    <string name="sos_title">SOS পঠিয়াওক</string>
+    <string name="sos_hold">২ ছেকেণ্ড ধৰি ৰাখক</string>
+    <string name="sos_holding">ধৰি থাকক…</string>
+    <string name="sos_sending">পঠিওৱা হৈ আছে</string>
+    <string name="sos_sent">SOS পঠিওৱা হ\'ল</string>
+    <string name="sos_no_fix">এতিয়ালৈকে অৱস্থান পোৱা নাই। SOS তথাপিও যাব।</string>
+    <string name="sos_location_sealed">অৱস্থান যোগ কৰি উদ্ধাৰকাৰীৰ চাবিৰে ছীল কৰা হ\'ল</string>
+    <string name="sos_my_messages">আপোনাৰ বাৰ্তা</string>
+    <string name="sos_none">আপুনি এতিয়ালৈকে একো পঠিওৱা নাই।</string>
+
+    <string name="checkin_title">মই সুৰক্ষিত</string>
+    <string name="checkin_contact">কাক জনাব — ফোন নম্বৰ বা নাম</string>
+    <string name="checkin_send">পঠিয়াওক</string>
+    <string name="checkin_status_safe">সুৰক্ষিত</string>
+    <string name="checkin_status_help">সহায় লাগে</string>
+    <string name="checkin_status_moving">গৈ আছোঁ</string>
+    <string name="checkin_sent">খবৰ পঠিওৱা হ\'ল</string>
+
+    <string name="status_held">এই ফোনত ৰখা আছে</string>
+    <string name="status_carried">%1$d টা ফোনে কঢ়িয়াই আছে</string>
+    <string name="status_carried_warning">কঢ়িয়াই নিয়াৰ অৰ্থ পোৱা নহয়। সহায় এতিয়াও নিশ্চিত নহয়।</string>
+    <string name="status_delivered">পাই গ\'ল</string>
+    <string name="status_expired">সময় শেষ</string>
+    <string name="status_hops">%1$d খোজ</string>
+
+    <string name="carrying_title">আপোনাৰ ফোনে কি কঢ়িয়াই আছে</string>
+    <string name="carrying_body">আপোনাৰ ফোনে আনৰ %1$d টা বাৰ্তা কঢ়িয়াই আছে।</string>
+    <string name="carrying_encrypted">এইবোৰ এনক্ৰিপ্ট কৰা। আপোনাৰ ফোনে পঢ়িব নোৱাৰে।</string>
+    <string name="carrying_empty">আপোনাৰ ফোনে এতিয়ালৈকে আনৰ একো কঢ়িয়াই থকা নাই।</string>
+    <string name="carrying_row">%1$s · %2$d বাইট · %3$d খোজ</string>
+
+    <string name="rescuer_title">উদ্ধাৰকাৰীৰ দৃশ্য (ডেমো)</string>
+    <string name="rescuer_body">এই পৰ্দাই এপ্‌ৰ ভিতৰৰ ডেমো চাবি ব্যৱহাৰ কৰে, গতিকে এই ফোনে ছীল কৰা বস্তু খুলিব পাৰে। প্ৰকৃত ব্যৱহাৰত সেই চাবি কেৱল উদ্ধাৰকাৰীৰ ওচৰতহে থাকিলহেঁতেন।</string>
+    <string name="rescuer_open">ছীল কৰা অৱস্থান খোলক</string>
+    <string name="rescuer_none">এতিয়ালৈকে খুলিবলৈ একো নাই।</string>
+    <string name="rescuer_coords">অক্ষাংশ %1$s, দ্ৰাঘিমাংশ %2$s</string>
+    <string name="rescuer_no_fix">ছীল কৰা অংশত কোনো অৱস্থান নাই</string>
+</resources>

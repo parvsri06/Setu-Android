@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_next">পরবর্তী</string>
+    <string name="action_back">পিছনে</string>
+    <string name="action_close">বন্ধ</string>
+
+    <string name="notif_channel_name">রিলে</string>
+    <string name="notif_channel_desc">দেখায় যে Setu বার্তা বহন করছে</string>
+    <string name="notif_relay_title">Setu রিলে চলছে</string>
+    <string name="notif_relay_text">কাছে %1$d টি ফোন · %2$d টি বার্তা বহন করছে</string>
+
+    <string name="lang_title">আপনার ভাষা বেছে নিন</string>
+
+    <string name="consent_title">Setu কী করে</string>
+    <string name="consent_body_1">নেটওয়ার্ক না থাকলে Setu ব্লুটুথে এক ফোন থেকে আরেক ফোনে ছোট বার্তা পৌঁছে দেয়।</string>
+    <string name="consent_body_2">আপনার ফোন অন্যদের বার্তাও বহন করবে। সেগুলি এনক্রিপ্ট করা। আপনার ফোন সেগুলি পড়তে পারে না।</string>
+    <string name="consent_body_3">আপনার অবস্থান কেবল SOS-এর ভিতরে যায়, এবং কেবল উদ্ধারকারীই তা খুলতে পারেন।</string>
+    <string name="consent_purpose">শুধু জরুরি বার্তা পৌঁছে দিতে ব্যবহৃত হয়। সময় শেষ হলে বার্তা মুছে যায়। আপনি যে কোনও সময় রিলে বন্ধ করতে পারেন।</string>
+    <string name="consent_agree">আমি বুঝেছি এবং সম্মত</string>
+
+    <string name="perm_title">অনুমতি</string>
+    <string name="perm_body">কাছের ফোন খুঁজতে Setu-র ব্লুটুথ দরকার, আর আপনার SOS-এ অবস্থান যুক্ত করতে লোকেশন দরকার।</string>
+    <string name="perm_grant">অনুমতি দিন</string>
+    <string name="perm_missing">কিছু অনুমতি পাওয়া যায়নি। সেগুলি ছাড়া রিলে চলতে পারে না।</string>
+    <string name="perm_granted">সব অনুমতি পাওয়া গেছে</string>
+
+    <string name="battery_title">Setu চালু রাখুন</string>
+    <string name="battery_body">অনেক ফোন ব্যাটারি বাঁচাতে পটভূমির অ্যাপ বন্ধ করে দেয়। স্ক্রিন বন্ধ থাকলেও Setu-কে চলতে হবে। অনুগ্রহ করে এটিকে বাধা ছাড়া চলতে দিন।</string>
+    <string name="battery_open">ব্যাটারি সেটিংস খুলুন</string>
+    <string name="battery_skip">এখন থাক</string>
+    <string name="battery_done">হয়ে গেছে</string>
+
+    <string name="home_nearby">কাছে %1$d টি ফোন</string>
+    <string name="home_nearby_none">এখনও কাছে কোনও ফোন নেই</string>
+    <string name="home_sos">SOS</string>
+    <string name="home_safe">আমি নিরাপদ</string>
+    <string name="home_carrying">অন্যদের %1$d টি বার্তা বহন করছে</string>
+    <string name="home_relay_on">রিলে চালু</string>
+    <string name="home_relay_off">রিলে বন্ধ</string>
+    <string name="home_start">রিলে চালু করুন</string>
+    <string name="home_stop">রিলে বন্ধ করুন</string>
+    <string name="home_bt_off">ব্লুটুথ বন্ধ</string>
+    <string name="home_location_off">লোকেশন বন্ধ — ব্লুটুথ ফোন খুঁজে পাবে না</string>
+    <string name="home_diagnostics">কারিগরি তথ্য</string>
+
+    <string name="sos_title">SOS পাঠান</string>
+    <string name="sos_hold">২ সেকেন্ড চেপে ধরুন</string>
+    <string name="sos_holding">ধরে রাখুন…</string>
+    <string name="sos_sending">পাঠানো হচ্ছে</string>
+    <string name="sos_sent">SOS পাঠানো হয়েছে</string>
+    <string name="sos_no_fix">এখনও অবস্থান পাওয়া যায়নি। SOS তবুও যাবে।</string>
+    <string name="sos_location_sealed">অবস্থান যুক্ত করে উদ্ধারকারীর চাবিতে সিল করা হয়েছে</string>
+    <string name="sos_my_messages">আপনার বার্তা</string>
+    <string name="sos_none">আপনি এখনও কিছু পাঠাননি।</string>
+
+    <string name="checkin_title">আমি নিরাপদ</string>
+    <string name="checkin_contact">কাকে জানাবেন — ফোন নম্বর বা নাম</string>
+    <string name="checkin_send">পাঠান</string>
+    <string name="checkin_status_safe">নিরাপদ</string>
+    <string name="checkin_status_help">সাহায্য দরকার</string>
+    <string name="checkin_status_moving">যাচ্ছি</string>
+    <string name="checkin_sent">খবর পাঠানো হয়েছে</string>
+
+    <string name="status_held">এই ফোনে রাখা আছে</string>
+    <string name="status_carried">%1$d টি ফোন বহন করছে</string>
+    <string name="status_carried_warning">বহন করা মানে পৌঁছানো নয়। সাহায্য এখনও নিশ্চিত নয়।</string>
+    <string name="status_delivered">পৌঁছে গেছে</string>
+    <string name="status_expired">সময় শেষ</string>
+    <string name="status_hops">%1$d ধাপ</string>
+
+    <string name="carrying_title">আপনার ফোন কী বহন করছে</string>
+    <string name="carrying_body">আপনার ফোন অন্যদের %1$d টি বার্তা বহন করছে।</string>
+    <string name="carrying_encrypted">এগুলি এনক্রিপ্ট করা। আপনার ফোন এগুলি পড়তে পারে না।</string>
+    <string name="carrying_empty">আপনার ফোন এখনও অন্যদের কিছু বহন করছে না।</string>
+    <string name="carrying_row">%1$s · %2$d বাইট · %3$d ধাপ</string>
+
+    <string name="rescuer_title">উদ্ধারকারীর দৃশ্য (ডেমো)</string>
+    <string name="rescuer_body">এই পর্দা অ্যাপের ভিতরের ডেমো চাবি ব্যবহার করে, তাই এই ফোন যা সিল করেছে তা খুলতে পারে। বাস্তব ব্যবহারে সেই চাবি কেবল উদ্ধারকারীর কাছে থাকত।</string>
+    <string name="rescuer_open">সিল করা অবস্থান খুলুন</string>
+    <string name="rescuer_none">এখনও খোলার মতো কিছু নেই।</string>
+    <string name="rescuer_coords">অক্ষাংশ %1$s, দ্রাঘিমাংশ %2$s</string>
+    <string name="rescuer_no_fix">সিল করা অংশে কোনও অবস্থান নেই</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose draws everything; the platform theme only has to avoid a flash
+         of the wrong colour at launch and keep the action bar out of the way. -->
+    <style name="Theme.Setu" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/setu_surface</item>
+        <item name="android:statusBarColor">@color/setu_navy</item>
+    </style>
+</resources>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_next">आगे</string>
+    <string name="action_back">पीछे</string>
+    <string name="action_close">बंद करें</string>
+
+    <string name="notif_channel_name">रिले</string>
+    <string name="notif_channel_desc">दिखाता है कि Setu संदेश ले जा रहा है</string>
+    <string name="notif_relay_title">Setu रिले चल रहा है</string>
+    <string name="notif_relay_text">%1$d फ़ोन पास में · %2$d संदेश ले जा रहे हैं</string>
+
+    <string name="lang_title">अपनी भाषा चुनें</string>
+
+    <string name="consent_title">Setu क्या करता है</string>
+    <string name="consent_body_1">जब नेटवर्क नहीं होता, Setu छोटे संदेश ब्लूटूथ से एक फ़ोन से दूसरे फ़ोन तक पहुँचाता है।</string>
+    <string name="consent_body_2">आपका फ़ोन दूसरों के संदेश भी ले जाएगा। वे एन्क्रिप्टेड हैं। आपका फ़ोन उन्हें पढ़ नहीं सकता।</string>
+    <string name="consent_body_3">आपका स्थान केवल SOS के अंदर भेजा जाता है, और उसे केवल बचावकर्मी ही खोल सकता है।</string>
+    <string name="consent_purpose">इसका उपयोग केवल आपातकालीन संदेश भेजने के लिए होता है। समय पूरा होने पर संदेश मिटा दिए जाते हैं। आप रिले कभी भी रोक सकते हैं।</string>
+    <string name="consent_agree">मैं समझ गया और सहमत हूँ</string>
+
+    <string name="perm_title">अनुमतियाँ</string>
+    <string name="perm_body">पास के फ़ोन खोजने के लिए Setu को ब्लूटूथ चाहिए, और आपके SOS में स्थान जोड़ने के लिए लोकेशन चाहिए।</string>
+    <string name="perm_grant">अनुमति दें</string>
+    <string name="perm_missing">कुछ अनुमतियाँ नहीं मिलीं। उनके बिना रिले नहीं चल सकता।</string>
+    <string name="perm_granted">सभी अनुमतियाँ मिल गईं</string>
+
+    <string name="battery_title">Setu को चलता रखें</string>
+    <string name="battery_body">कई फ़ोन बैटरी बचाने के लिए पृष्ठभूमि ऐप बंद कर देते हैं। स्क्रीन बंद होने पर भी Setu का चलते रहना ज़रूरी है। कृपया इसे बिना रोक-टोक चलने दें।</string>
+    <string name="battery_open">बैटरी सेटिंग खोलें</string>
+    <string name="battery_skip">अभी छोड़ें</string>
+    <string name="battery_done">हो गया</string>
+
+    <string name="home_nearby">%1$d फ़ोन पास में</string>
+    <string name="home_nearby_none">अभी पास में कोई फ़ोन नहीं</string>
+    <string name="home_sos">SOS</string>
+    <string name="home_safe">मैं सुरक्षित हूँ</string>
+    <string name="home_carrying">दूसरों के %1$d संदेश ले जा रहे हैं</string>
+    <string name="home_relay_on">रिले चालू</string>
+    <string name="home_relay_off">रिले बंद</string>
+    <string name="home_start">रिले चालू करें</string>
+    <string name="home_stop">रिले बंद करें</string>
+    <string name="home_bt_off">ब्लूटूथ बंद है</string>
+    <string name="home_location_off">लोकेशन बंद है — ब्लूटूथ फ़ोन नहीं खोज सकता</string>
+    <string name="home_diagnostics">तकनीकी जानकारी</string>
+
+    <string name="sos_title">SOS भेजें</string>
+    <string name="sos_hold">2 सेकंड दबाए रखें</string>
+    <string name="sos_holding">दबाए रखें…</string>
+    <string name="sos_sending">भेजा जा रहा है</string>
+    <string name="sos_sent">SOS भेजा गया</string>
+    <string name="sos_no_fix">अभी स्थान नहीं मिला। SOS फिर भी भेजा जाएगा।</string>
+    <string name="sos_location_sealed">स्थान जोड़कर बचावकर्मी की कुंजी से सील किया गया</string>
+    <string name="sos_my_messages">आपके संदेश</string>
+    <string name="sos_none">आपने अभी तक कुछ नहीं भेजा है।</string>
+
+    <string name="checkin_title">मैं सुरक्षित हूँ</string>
+    <string name="checkin_contact">किसे बताना है — फ़ोन नंबर या नाम</string>
+    <string name="checkin_send">भेजें</string>
+    <string name="checkin_status_safe">सुरक्षित</string>
+    <string name="checkin_status_help">मदद चाहिए</string>
+    <string name="checkin_status_moving">जा रहे हैं</string>
+    <string name="checkin_sent">सूचना भेजी गई</string>
+
+    <string name="status_held">इस फ़ोन में रखा है</string>
+    <string name="status_carried">%1$d फ़ोन ले जा रहे हैं</string>
+    <string name="status_carried_warning">ले जाया जाना, पहुँचना नहीं है। मदद की पुष्टि नहीं हुई है।</string>
+    <string name="status_delivered">पहुँच गया</string>
+    <string name="status_expired">समय समाप्त</string>
+    <string name="status_hops">%1$d छलाँग</string>
+
+    <string name="carrying_title">आपका फ़ोन क्या ले जा रहा है</string>
+    <string name="carrying_body">आपका फ़ोन दूसरों के %1$d संदेश ले जा रहा है।</string>
+    <string name="carrying_encrypted">ये एन्क्रिप्टेड हैं। आपका फ़ोन इन्हें पढ़ नहीं सकता।</string>
+    <string name="carrying_empty">आपका फ़ोन अभी दूसरों का कुछ नहीं ले जा रहा।</string>
+    <string name="carrying_row">%1$s · %2$d बाइट · %3$d छलाँग</string>
+
+    <string name="rescuer_title">बचावकर्मी दृश्य (डेमो)</string>
+    <string name="rescuer_body">यह स्क्रीन ऐप के अंदर मौजूद डेमो कुंजी का उपयोग करती है, इसलिए यह वही खोल सकती है जो इस फ़ोन ने सील किया। असली तैनाती में यह कुंजी केवल बचावकर्मी के पास होती।</string>
+    <string name="rescuer_open">सील किया स्थान खोलें</string>
+    <string name="rescuer_none">अभी खोलने के लिए कुछ नहीं है।</string>
+    <string name="rescuer_coords">अक्षांश %1$s, देशांतर %2$s</string>
+    <string name="rescuer_no_fix">सील किए हिस्से में कोई स्थान नहीं है</string>
+</resources>

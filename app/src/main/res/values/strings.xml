@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" translatable="false">Setu</string>
+
+    <string name="action_next">Next</string>
+    <string name="action_back">Back</string>
+    <string name="action_close">Close</string>
+
+    <string name="notif_channel_name">Relay</string>
+    <string name="notif_channel_desc">Shows that Setu is carrying messages</string>
+    <string name="notif_relay_title">Setu relay is running</string>
+    <string name="notif_relay_text">%1$d phones nearby · carrying %2$d messages</string>
+
+    <!-- First run -->
+    <string name="lang_title">Choose your language</string>
+    <string name="lang_en" translatable="false">English</string>
+    <string name="lang_hi" translatable="false">हिन्दी</string>
+    <string name="lang_bn" translatable="false">বাংলা</string>
+    <string name="lang_as" translatable="false">অসমীয়া</string>
+    <string name="lang_brx" translatable="false">बर\'</string>
+
+    <string name="consent_title">What Setu does</string>
+    <string name="consent_body_1">Setu carries short messages from phone to phone over Bluetooth when there is no network.</string>
+    <string name="consent_body_2">Your phone will also carry other people\'s messages. They are encrypted. Your phone cannot read them.</string>
+    <string name="consent_body_3">Your location is sent only inside an SOS, and only a rescuer can open it.</string>
+    <string name="consent_purpose">Used only to pass emergency messages. Messages are deleted when they expire. You can stop the relay at any time.</string>
+    <string name="consent_agree">I understand and agree</string>
+
+    <string name="perm_title">Permissions</string>
+    <string name="perm_body">Setu needs Bluetooth to find nearby phones, and location to attach a position to your SOS.</string>
+    <string name="perm_grant">Grant permissions</string>
+    <string name="perm_missing">Some permissions are missing. The relay cannot run without them.</string>
+    <string name="perm_granted">All permissions granted</string>
+
+    <string name="battery_title">Keep Setu running</string>
+    <string name="battery_body">Many phones stop background apps to save power. Setu must keep running with the screen off. Please allow it to run without restrictions.</string>
+    <string name="battery_open">Open battery settings</string>
+    <string name="battery_skip">Skip for now</string>
+    <string name="battery_done">Done</string>
+
+    <!-- Home -->
+    <string name="home_nearby">%1$d phones nearby</string>
+    <string name="home_nearby_none">No phones nearby yet</string>
+    <string name="home_sos">SOS</string>
+    <string name="home_safe">I\'m safe</string>
+    <string name="home_carrying">Carrying %1$d messages for others</string>
+    <string name="home_relay_on">Relay running</string>
+    <string name="home_relay_off">Relay stopped</string>
+    <string name="home_start">Start relay</string>
+    <string name="home_stop">Stop relay</string>
+    <string name="home_bt_off">Bluetooth is off</string>
+    <string name="home_location_off">Location is off — Bluetooth cannot find phones</string>
+    <string name="home_diagnostics">Diagnostics</string>
+
+    <!-- SOS -->
+    <string name="sos_title">Send SOS</string>
+    <string name="sos_hold">Hold for 2 seconds</string>
+    <string name="sos_holding">Keep holding…</string>
+    <string name="sos_sending">Sending</string>
+    <string name="sos_sent">SOS sent</string>
+    <string name="sos_no_fix">No location yet. The SOS will still be sent.</string>
+    <string name="sos_location_sealed">Location attached and sealed to the rescuer key</string>
+    <string name="sos_my_messages">Your messages</string>
+    <string name="sos_none">You have not sent anything yet.</string>
+
+    <!-- Check-in -->
+    <string name="checkin_title">I\'m safe</string>
+    <string name="checkin_contact">Phone number or name to tell</string>
+    <string name="checkin_send">Send</string>
+    <string name="checkin_status_safe">Safe</string>
+    <string name="checkin_status_help">Need help</string>
+    <string name="checkin_status_moving">Moving</string>
+    <string name="checkin_sent">Check-in sent</string>
+
+    <!-- Status ladder -->
+    <string name="status_held">Held on this phone</string>
+    <string name="status_carried">Carried by %1$d phones</string>
+    <string name="status_carried_warning">Carried is not delivered. Help is not confirmed.</string>
+    <string name="status_delivered">Delivered</string>
+    <string name="status_expired">Expired</string>
+    <string name="status_hops">%1$d hops</string>
+
+    <!-- Carrying -->
+    <string name="carrying_title">What your phone is carrying</string>
+    <string name="carrying_body">Your phone is carrying %1$d messages for other people.</string>
+    <string name="carrying_encrypted">These are encrypted. Your phone cannot read them.</string>
+    <string name="carrying_empty">Your phone is not carrying anything for others yet.</string>
+    <string name="carrying_row">%1$s · %2$d bytes · %3$d hops</string>
+
+    <!-- Rescuer demo -->
+    <string name="rescuer_title">Rescuer view (demo)</string>
+    <string name="rescuer_body">This screen uses a demo rescuer key that ships inside the app, so it can open what this phone sealed. In a real deployment that key would exist only on a rescuer device.</string>
+    <string name="rescuer_open">Open sealed location</string>
+    <string name="rescuer_none">Nothing sealed to open yet.</string>
+    <string name="rescuer_coords">Latitude %1$s, longitude %2$s</string>
+    <string name="rescuer_no_fix">Sealed body carries no location</string>
+
+    <!-- Diagnostics -->
+    <string name="diag_title" tools:ignore="MissingTranslation">Diagnostics</string>
+    <string name="diag_identity" tools:ignore="MissingTranslation">Identity key id</string>
+    <string name="diag_key_hw" tools:ignore="MissingTranslation">Key sealed by hardware keystore</string>
+    <string name="diag_key_sw" tools:ignore="MissingTranslation">Keystore unavailable — key stored unwrapped</string>
+    <string name="diag_path_ext" tools:ignore="MissingTranslation">Advertising: BLE 5 extended, one packet</string>
+    <string name="diag_path_legacy" tools:ignore="MissingTranslation">Advertising: legacy, 9 fragments per message</string>
+    <string name="diag_scanning" tools:ignore="MissingTranslation">Scanning</string>
+    <string name="diag_not_scanning" tools:ignore="MissingTranslation">Not scanning</string>
+    <string name="diag_packets" tools:ignore="MissingTranslation">Beacons heard</string>
+    <string name="diag_bursts" tools:ignore="MissingTranslation">Bursts sent</string>
+    <string name="diag_duplicates" tools:ignore="MissingTranslation">Duplicates heard</string>
+    <string name="diag_malformed" tools:ignore="MissingTranslation">Malformed dropped</string>
+    <string name="diag_badsig" tools:ignore="MissingTranslation">Bad signature dropped</string>
+    <string name="diag_stored" tools:ignore="MissingTranslation">Messages stored</string>
+    <string name="diag_known_keys" tools:ignore="MissingTranslation">Known origin keys</string>
+    <string name="diag_battery" tools:ignore="MissingTranslation">Battery</string>
+    <string name="diag_clock_jump" tools:ignore="MissingTranslation">Wall clock jumped — timestamps on this device are suspect</string>
+    <string name="diag_restarts" tools:ignore="MissingTranslation">Service starts this install</string>
+    <string name="diag_verify_note" tools:ignore="MissingTranslation">Beacon signatures can only be checked when the origin public key is known. Key exchange is phase 5, so most relayed messages are structurally validated but not cryptographically verified. Nothing here is shown as verified when it is not.</string>
+</resources>

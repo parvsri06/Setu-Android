@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CARRYING: a closed, sealed parcel. Content is never shown. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#1C2536" android:strokeWidth="2" android:fillColor="#00000000"
+        android:pathData="M4,8h16v12H4z" />
+    <path android:strokeColor="#1C2536" android:strokeWidth="2" android:fillColor="#00000000"
+        android:pathData="M9,8V6a3,3 0 0 1 6,0v2" />
+    <path android:fillColor="#1C2536"
+        android:pathData="M11,12h2v4h-2z" />
+</vector>

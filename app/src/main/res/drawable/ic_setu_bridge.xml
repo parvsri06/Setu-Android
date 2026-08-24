@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single-colour bridge silhouette. Notification icons are tinted to a
+     flat colour by the platform, so this one carries shape only. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path android:fillColor="#000000"
+        android:pathData="M2,17h20v2.4H2z" />
+    <path android:strokeColor="#000000" android:strokeWidth="2.6"
+        android:fillColor="#00000000" android:strokeLineCap="butt"
+        android:pathData="M3.6,17a8.4,8.4 0 0 1 16.8,0" />
+    <path android:strokeColor="#000000" android:strokeWidth="2.6"
+        android:fillColor="#00000000" android:strokeLineCap="butt"
+        android:pathData="M8.2,17a3.8,3.8 0 0 1 7.6,0" />
+</vector>

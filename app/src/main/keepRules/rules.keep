@@ -1,0 +1,4 @@
+# Setu keep rules.
+# The app has no reflection-based frameworks; nothing needs keeping beyond the
+# defaults. Wire encoding is hand-rolled, storage is raw SQLite.
+-dontwarn kotlinx.coroutines.**
