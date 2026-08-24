@@ -48,6 +48,7 @@ data class RelayState(
     val packetsSeen: Long = 0,
     val fragmentsSeen: Long = 0,
     val reassembled: Long = 0,
+    val presenceSeen: Long = 0,
     val burstsSent: Long = 0,
     val duplicatesHeard: Long = 0,
     val malformedDropped: Long = 0,

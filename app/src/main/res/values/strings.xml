@@ -92,27 +92,146 @@
     <string name="rescuer_body">This screen uses a demo rescuer key that ships inside the app, so it can open what this phone sealed. In a real deployment that key would exist only on a rescuer device.</string>
     <string name="rescuer_open">Open sealed location</string>
     <string name="rescuer_none">Nothing sealed to open yet.</string>
+    <string name="rescuer_no_key">This build does not contain a rescuer key, so it cannot open a sealed body. That is the intended behaviour for a shared build: only a rescuer should be able to read an SOS location.</string>
+    <string name="rescuer_sealed">Sealed — this build holds no key to open it</string>
     <string name="rescuer_coords">Latitude %1$s, longitude %2$s</string>
     <string name="rescuer_no_fix">Sealed body carries no location</string>
 
     <!-- Diagnostics -->
-    <string name="diag_title" tools:ignore="MissingTranslation">Diagnostics</string>
-    <string name="diag_identity" tools:ignore="MissingTranslation">Identity key id</string>
-    <string name="diag_key_hw" tools:ignore="MissingTranslation">Key sealed by hardware keystore</string>
-    <string name="diag_key_sw" tools:ignore="MissingTranslation">Keystore unavailable — key stored unwrapped</string>
-    <string name="diag_path_ext" tools:ignore="MissingTranslation">Advertising: BLE 5 extended, one packet</string>
-    <string name="diag_path_legacy" tools:ignore="MissingTranslation">Advertising: legacy, 9 fragments per message</string>
-    <string name="diag_scanning" tools:ignore="MissingTranslation">Scanning</string>
-    <string name="diag_not_scanning" tools:ignore="MissingTranslation">Not scanning</string>
-    <string name="diag_packets" tools:ignore="MissingTranslation">Beacons heard</string>
-    <string name="diag_bursts" tools:ignore="MissingTranslation">Bursts sent</string>
-    <string name="diag_duplicates" tools:ignore="MissingTranslation">Duplicates heard</string>
-    <string name="diag_malformed" tools:ignore="MissingTranslation">Malformed dropped</string>
-    <string name="diag_badsig" tools:ignore="MissingTranslation">Bad signature dropped</string>
-    <string name="diag_stored" tools:ignore="MissingTranslation">Messages stored</string>
-    <string name="diag_known_keys" tools:ignore="MissingTranslation">Known origin keys</string>
-    <string name="diag_battery" tools:ignore="MissingTranslation">Battery</string>
-    <string name="diag_clock_jump" tools:ignore="MissingTranslation">Wall clock jumped — timestamps on this device are suspect</string>
-    <string name="diag_restarts" tools:ignore="MissingTranslation">Service starts this install</string>
-    <string name="diag_verify_note" tools:ignore="MissingTranslation">Beacon signatures can only be checked when the origin public key is known. Key exchange is phase 5, so most relayed messages are structurally validated but not cryptographically verified. Nothing here is shown as verified when it is not.</string>
+    <string name="diag_title">Diagnostics</string>
+    <string name="diag_identity">Identity key id</string>
+    <string name="diag_key_hw">Key sealed by hardware keystore</string>
+    <string name="diag_key_sw">Keystore unavailable — key stored unwrapped</string>
+    <string name="diag_path_ext">Advertising: BLE 5 extended, one packet</string>
+    <string name="diag_path_legacy">Advertising: legacy, 9 fragments per message</string>
+    <string name="diag_scanning">Scanning</string>
+    <string name="diag_not_scanning">Not scanning</string>
+    <string name="diag_presence">Presence beacons heard</string>
+    <string name="diag_packets">Beacons heard</string>
+    <string name="diag_bursts">Bursts sent</string>
+    <string name="diag_duplicates">Duplicates heard</string>
+    <string name="diag_malformed">Malformed dropped</string>
+    <string name="diag_badsig">Bad signature dropped</string>
+    <string name="diag_stored">Messages stored</string>
+    <string name="diag_known_keys">Known origin keys</string>
+    <string name="diag_battery">Battery</string>
+    <string name="diag_clock_jump">Wall clock jumped — timestamps on this device are suspect</string>
+    <string name="diag_restarts">Service starts this install</string>
+    <string name="diag_verify_note">Beacon signatures can only be checked when the origin public key is known. Key exchange is phase 5, so most relayed messages are structurally validated but not cryptographically verified. Nothing here is shown as verified when it is not.</string>
+
+    <string name="home_settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_theme">Appearance</string>
+    <string name="theme_system">Match the phone</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_theme_note">Dark uses less battery on an OLED screen. Light is easier to read in bright sun.</string>
+    <string name="settings_relay">Carrying for others</string>
+    <string name="settings_relay_note">While this is on, your phone carries other people\'s messages and passes them on. You can turn it off at any time.</string>
+
+    <!-- Survey (stage 2) -->
+    <string name="survey_title">Survey</string>
+    <string name="home_surveys">Surveys on this phone: %1$d</string>
+    <string name="survey_welcome_body">Report affected people and damage, even without internet.</string>
+    <string name="survey_offline_ready">Works offline</string>
+    <string name="survey_welcome_note">Your answers are saved on this phone. Nothing is sent until you have a connection or a nearby phone to pass them to.</string>
+    <string name="survey_start">Start survey</string>
+    <string name="survey_step_of">Step %1$d of %2$d</string>
+    <string name="survey_step_personal">Personal details</string>
+    <string name="survey_step_location">Location</string>
+    <string name="survey_step_damage">Damage</string>
+    <string name="survey_step_casualties">Affected people</string>
+    <string name="survey_step_camp">Relief camp</string>
+    <string name="survey_step_review">Review</string>
+    <string name="survey_personal_sub">Basic information of the affected person or family.</string>
+    <string name="survey_name">Full name</string>
+    <string name="survey_father">Father\'s name</string>
+    <string name="survey_mobile">Mobile number</string>
+    <string name="survey_mobile_hint">10 digits</string>
+    <string name="survey_bad_mobile">Enter 10 digits</string>
+    <string name="survey_aadhaar">Aadhaar number</string>
+    <string name="survey_aadhaar_hint">12 digits. Encrypted at once — this phone keeps only the last four.</string>
+    <string name="survey_bad_aadhaar">Enter 12 digits</string>
+    <string name="survey_dup_aadhaar">This Aadhaar number is already recorded on this phone.</string>
+    <string name="survey_family">Family ID</string>
+    <string name="survey_optional">Optional</string>
+    <string name="survey_proxy">I am filling this for someone else</string>
+    <string name="survey_proxy_yes">Filled on their behalf</string>
+    <string name="survey_proxy_note">Use this when the person has no phone. Under the DPDP Act the consent must come from the person the data is about, not from you — confirm they agreed.</string>
+    <string name="survey_proxy_consent">They agreed to this</string>
+    <string name="survey_location_note">Area names only — no GPS needed. Enter them as they are known locally.</string>
+    <string name="survey_village">Village or town</string>
+    <string name="survey_district">District</string>
+    <string name="survey_post_office">Nearest post office</string>
+    <string name="survey_police_station">Nearest police station</string>
+    <string name="survey_pin">PIN code</string>
+    <string name="survey_pin_hint">6 digits</string>
+    <string name="survey_bad_pin">Enter 6 digits</string>
+    <string name="survey_disaster_type">Type of disaster</string>
+    <string name="survey_disaster_other">Specify the disaster</string>
+    <string name="disaster_flood">Flood</string>
+    <string name="disaster_earthquake">Earthquake</string>
+    <string name="disaster_cyclone">Cyclone</string>
+    <string name="disaster_landslide">Landslide</string>
+    <string name="disaster_fire">Fire</string>
+    <string name="disaster_other">Other</string>
+    <string name="survey_damage_date">Date of damage</string>
+    <string name="survey_damage_date_hint">For example 12-08-2026</string>
+    <string name="survey_damage_area">What was damaged</string>
+    <string name="survey_damage_other">Specify what else</string>
+    <string name="survey_damage_desc">Description of damage</string>
+    <string name="area_house">House</string>
+    <string name="area_shop">Shop</string>
+    <string name="area_land">Farmland</string>
+    <string name="area_road">Road</string>
+    <string name="area_vehicle">Vehicle</string>
+    <string name="area_livestock">Livestock</string>
+    <string name="area_other">Other</string>
+    <string name="survey_internet_only">Damage details and photos travel over the internet, not over the radio — photo-sized data would crowd out the SOS messages the mesh exists to carry.</string>
+    <string name="survey_casualties_sub">Add one card per affected person. Leave it empty if nobody was hurt.</string>
+    <string name="survey_person_n">Person %1$d</string>
+    <string name="survey_person_name">Name</string>
+    <string name="survey_age">Age</string>
+    <string name="survey_gender">Gender</string>
+    <string name="gender_male">Male</string>
+    <string name="gender_female">Female</string>
+    <string name="gender_other">Other</string>
+    <string name="survey_status">Status</string>
+    <string name="status_alive">Alive</string>
+    <string name="status_missing">Missing</string>
+    <string name="status_not_alive">Not alive</string>
+    <string name="survey_status_unset">Not answered</string>
+    <string name="survey_person_location">Where they are now</string>
+    <string name="survey_add_person">Add another person</string>
+    <string name="survey_remove_person">Remove</string>
+    <string name="survey_no_people">Nobody listed</string>
+    <string name="survey_in_camp">Staying in a relief camp</string>
+    <string name="survey_camp_name">Camp name</string>
+    <string name="survey_camp_location">Camp location</string>
+    <string name="survey_needs">What is needed most</string>
+    <string name="survey_incomplete">Some details are still missing. You can still save — a partly filled survey is more use than none.</string>
+    <string name="survey_incomplete_tag">Incomplete</string>
+    <string name="survey_edit">Edit</string>
+    <string name="survey_save">Save survey</string>
+    <string name="survey_save_draft">Save draft</string>
+    <string name="survey_saves_local">Saves on this phone. Nothing is sent yet.</string>
+    <string name="survey_saved_title">Saved</string>
+    <string name="survey_saved_body">The survey is stored on this phone.</string>
+    <string name="survey_saved_id">Survey ID %1$s</string>
+    <string name="survey_not_sent_yet">Not sent yet. Carrying surveys between phones needs the bulk plane, which is not built. Internet upload is not built either. Both are the next phases.</string>
+    <string name="survey_new">New survey</string>
+    <string name="survey_done">Done</string>
+    <string name="survey_list_title">Surveys</string>
+    <string name="survey_list_empty">No surveys on this phone yet.</string>
+    <string name="survey_list_note">Stored on this phone only. Nothing has been sent.</string>
+    <string name="survey_unnamed">Unnamed</string>
+    <string name="survey_people_count">%1$d people listed</string>
+    <string name="survey_status_draft">Draft</string>
+    <string name="survey_status_complete">Saved on this phone</string>
+    <string name="survey_status_queued">Waiting to send</string>
+    <string name="survey_status_relayed">Carried by another phone</string>
+    <string name="survey_status_uploaded">Delivered to the server</string>
+    <string name="survey_yes">Yes</string>
+    <string name="survey_no">No</string>
 </resources>

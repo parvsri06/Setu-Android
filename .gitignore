@@ -13,3 +13,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Release signing — never commit. The keystore itself lives outside this folder.
+keystore.properties
+*.jks
+*.keystore
+
+# Built artefacts kept at the project root for sharing
+/setu-*.apk
+
+# Per-machine IDE state
+/.idea/deploymentTargetSelector.xml

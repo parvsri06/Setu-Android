@@ -9,7 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import `in`.setu.relay.R
-import `in`.setu.relay.crypto.Keys
+import `in`.setu.relay.crypto.RescuerDemo
 import `in`.setu.relay.crypto.SealedBox
 import `in`.setu.relay.relay.RelayEngine
 import `in`.setu.relay.relay.RelayService
@@ -41,7 +41,7 @@ fun DiagnosticsScreen(
                 stringResource(
                     if (state.hardwareBackedKey) R.string.diag_key_hw else R.string.diag_key_sw,
                 ),
-                color = if (state.hardwareBackedKey) Setu.Green else Setu.Orange,
+                color = if (state.hardwareBackedKey) Setu.colors.deliveredText else Setu.colors.warnText,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -57,15 +57,16 @@ fun DiagnosticsScreen(
                 stringResource(
                     if (state.scanning) R.string.diag_scanning else R.string.diag_not_scanning,
                 ),
-                color = if (state.scanning) Setu.Green else Setu.Orange,
+                color = if (state.scanning) Setu.colors.deliveredText else Setu.colors.warnText,
                 style = MaterialTheme.typography.bodyMedium,
             )
             state.radioError?.let {
-                Text(it, color = Setu.Orange, style = MaterialTheme.typography.bodyMedium)
+                Text(it, color = Setu.colors.warnText, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
         SetuCard {
+            LabelValue(stringResource(R.string.diag_presence), state.presenceSeen.toString())
             LabelValue(stringResource(R.string.diag_packets), state.packetsSeen.toString())
             LabelValue(stringResource(R.string.diag_bursts), state.burstsSent.toString())
             LabelValue(stringResource(R.string.diag_duplicates), state.duplicatesHeard.toString())
@@ -83,7 +84,7 @@ fun DiagnosticsScreen(
         if (state.wallClockJumped) {
             Text(
                 stringResource(R.string.diag_clock_jump),
-                color = Setu.Orange,
+                color = Setu.colors.warnText,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -113,11 +114,15 @@ fun DiagnosticsScreen(
  */
 @Composable
 fun RescuerScreen(state: RelayState, onBack: () -> Unit) {
+    val rescuerKey = RescuerDemo.privateKey
+
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         ScreenHeader(stringResource(R.string.rescuer_title), onBack)
 
         Text(
-            stringResource(R.string.rescuer_body),
+            stringResource(
+                if (rescuerKey != null) R.string.rescuer_body else R.string.rescuer_no_key,
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -132,13 +137,22 @@ fun RescuerScreen(state: RelayState, onBack: () -> Unit) {
         for (m in sealedOnes) {
             SetuCard {
                 Text("${MsgType.name(m.type)}  ${m.idHex.take(8)}", style = MaterialTheme.typography.titleMedium)
-                val opened = SealedBox.open(Keys.RESCUER_PRIVATE_DEMO_ONLY, m.sealedBody)
+                // A shared build has no rescuer key, so the body stays sealed —
+                // which is the correct outcome, not a failure.
+                val opened = rescuerKey?.let { SealedBox.open(it, m.sealedBody) }
                 when {
+                    rescuerKey == null ->
+                        Text(
+                            stringResource(R.string.rescuer_sealed),
+                            color = Setu.colors.muted,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+
                     opened == null ->
-                        Text("Could not open — not sealed to this key", color = Setu.Orange)
+                        Text("Could not open — not sealed to this key", color = Setu.colors.warnText)
 
                     m.type == MsgType.SOS && opened.all { it.toInt() == 0 } ->
-                        Text(stringResource(R.string.rescuer_no_fix), color = Setu.Grey)
+                        Text(stringResource(R.string.rescuer_no_fix), color = Setu.colors.muted)
 
                     m.type == MsgType.SOS -> {
                         val (lat, lon) = Bodies.readSosPlaintext(opened)
@@ -148,14 +162,14 @@ fun RescuerScreen(state: RelayState, onBack: () -> Unit) {
                                 String.format(Locale.US, "%.5f", lat),
                                 String.format(Locale.US, "%.5f", lon),
                             ),
-                            color = Setu.Green,
+                            color = Setu.colors.deliveredText,
                             style = MaterialTheme.typography.bodyLarge,
                         )
                     }
 
                     else -> Text(
                         "Check-in status ${Bodies.readCheckInStatus(opened)}",
-                        color = Setu.Green,
+                        color = Setu.colors.deliveredText,
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }

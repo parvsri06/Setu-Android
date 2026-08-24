@@ -98,8 +98,8 @@ fun FirstRunScreen(
                 BigButton(
                     label = stringResource(R.string.consent_agree),
                     iconRes = R.drawable.ic_safe,
-                    container = Setu.Green,
-                    content = Setu.White,
+                    container = MaterialTheme.colorScheme.primary,
+                    content = MaterialTheme.colorScheme.onPrimary,
                 ) { step = 2 }
             }
 
@@ -110,14 +110,22 @@ fun FirstRunScreen(
                     stringResource(
                         if (permissionsGranted) R.string.perm_granted else R.string.perm_missing,
                     ),
-                    color = if (permissionsGranted) Setu.Green else Setu.Orange,
+                    color = if (permissionsGranted) Setu.colors.deliveredText else Setu.colors.warnText,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 BigButton(
                     label = stringResource(R.string.perm_grant),
                     iconRes = R.drawable.ic_relay,
-                    container = if (permissionsGranted) Setu.Grey else Setu.Orange,
-                    content = Setu.Navy,
+                    container = if (permissionsGranted) {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                    content = if (permissionsGranted) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onPrimary
+                    },
                     onClick = onRequestPermissions,
                 )
                 BigButton(
@@ -135,15 +143,15 @@ fun FirstRunScreen(
                 BigButton(
                     label = stringResource(R.string.battery_open),
                     iconRes = R.drawable.ic_relay,
-                    container = Setu.Orange,
-                    content = Setu.Navy,
+                    container = MaterialTheme.colorScheme.primary,
+                    content = MaterialTheme.colorScheme.onPrimary,
                     onClick = onOpenBatterySettings,
                 )
                 BigButton(
                     label = stringResource(R.string.battery_done),
                     iconRes = R.drawable.ic_safe,
-                    container = Setu.Green,
-                    content = Setu.White,
+                    container = MaterialTheme.colorScheme.primary,
+                    content = MaterialTheme.colorScheme.onPrimary,
                     onClick = onDone,
                 )
                 Text(

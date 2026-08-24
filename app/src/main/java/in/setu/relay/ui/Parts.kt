@@ -49,7 +49,7 @@ import androidx.compose.ui.graphics.PathMeasure
 fun BridgeArc(
     progress: Float,
     modifier: Modifier = Modifier,
-    fill: Color = Setu.Orange,
+    fill: Color = MaterialTheme.colorScheme.primary,
 ) {
     val track = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
     // The deck is navy in the brand, but on the dark theme the card is navy too,
@@ -95,11 +95,17 @@ fun statusProgress(status: Int): Float = when (status) {
     else -> 0f
 }
 
+/**
+ * Composable because the semantic colours differ between light and dark. Amber
+ * for CARRIED and green only for DELIVERED is the honesty rule in
+ * docs/07-ui-spec.md, so it lives in one place rather than at each call site.
+ */
+@Composable
 fun statusColor(status: Int): Color = when (status) {
-    Status.DELIVERED -> Setu.Green
-    Status.CARRIED -> Setu.Orange     // amber, never green — see docs/07-ui-spec.md
-    Status.EXPIRED -> Setu.Grey
-    else -> Setu.Grey
+    Status.DELIVERED -> Setu.colors.deliveredText
+    Status.CARRIED -> Setu.colors.carriedText     // amber, never green
+    Status.EXPIRED -> Setu.colors.muted
+    else -> Setu.colors.muted
 }
 
 fun statusIcon(status: Int): Int = when (status) {

@@ -58,13 +58,13 @@ fun CheckInScreen(engine: RelayEngine, state: RelayState, prefs: Prefs, onBack: 
         )
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatusChip(stringResource(R.string.checkin_status_safe), status == Bodies.STATUS_SAFE, Setu.Green, Modifier.weight(1f)) {
+            StatusChip(stringResource(R.string.checkin_status_safe), status == Bodies.STATUS_SAFE, MaterialTheme.colorScheme.primary, Modifier.weight(1f)) {
                 status = Bodies.STATUS_SAFE
             }
-            StatusChip(stringResource(R.string.checkin_status_help), status == Bodies.STATUS_NEED_HELP, Setu.Orange, Modifier.weight(1f)) {
+            StatusChip(stringResource(R.string.checkin_status_help), status == Bodies.STATUS_NEED_HELP, Setu.colors.carried, Modifier.weight(1f)) {
                 status = Bodies.STATUS_NEED_HELP
             }
-            StatusChip(stringResource(R.string.checkin_status_moving), status == Bodies.STATUS_MOVING, Setu.Grey, Modifier.weight(1f)) {
+            StatusChip(stringResource(R.string.checkin_status_moving), status == Bodies.STATUS_MOVING, Setu.colors.muted, Modifier.weight(1f)) {
                 status = Bodies.STATUS_MOVING
             }
         }
@@ -72,8 +72,8 @@ fun CheckInScreen(engine: RelayEngine, state: RelayState, prefs: Prefs, onBack: 
         BigButton(
             label = stringResource(R.string.checkin_send),
             iconRes = R.drawable.ic_safe,
-            container = Setu.Green,
-            content = Setu.White,
+            container = MaterialTheme.colorScheme.primary,
+            content = MaterialTheme.colorScheme.onPrimary,
             enabled = contact.isNotBlank(),
         ) {
             prefs.lastContact = contact
@@ -84,7 +84,11 @@ fun CheckInScreen(engine: RelayEngine, state: RelayState, prefs: Prefs, onBack: 
         }
 
         if (sent) {
-            Text(stringResource(R.string.checkin_sent), color = Setu.Green, style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.checkin_sent),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium,
+            )
         }
 
         Spacer(Modifier.height(4.dp))
@@ -112,7 +116,7 @@ private fun StatusChip(
     ) {
         Text(
             label,
-            color = if (selected) Setu.White else MaterialTheme.colorScheme.onSurface,
+            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyMedium,
         )
     }

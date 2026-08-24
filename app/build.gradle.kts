@@ -1,7 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Release signing. The keystore lives outside this folder and
+// keystore.properties is gitignored, so neither travels with the project.
+// Without them the build falls back to debug signing, which is fine for local
+// development and must never be used for an APK given to other people.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val hasReleaseKey = keystoreProps.getProperty("storeFile")
+    ?.let { file(it).exists() } == true
 
 android {
     namespace = "in.setu.relay"
@@ -13,9 +26,23 @@ android {
         applicationId = "in.setu.relay"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.3.0"
+        versionCode = 2
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+                enableV1Signing = false   // minSdk 26 never needs JAR signing
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
     }
 
     buildTypes {
@@ -24,12 +51,19 @@ android {
                 enable = true
             }
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
         }
     }
 
     androidResources {
         localeFilters += listOf("en", "hi", "bn", "as", "brx")
+    }
+
+    lint {
+        // Assam is the first target, so a half-translated Assamese build is a
+        // product defect, not a warning. The Diagnostics screen shipped in 1.0.1
+        // rendering English under অসমীয়া is exactly what this gate now catches.
+        error += setOf("MissingTranslation", "ExtraTranslation")
     }
 
     buildFeatures {
