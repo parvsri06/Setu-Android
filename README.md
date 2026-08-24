@@ -18,6 +18,8 @@ of deviation.
 | 2 | Beacon plane — advertiser, scanner, dedupe, backoff schedule | **Done** |
 | 2b | Legacy fragmentation — 8+1 fragment codec | **Done** |
 | 3 | Receipts + status UI — status ladder, carrying screen, mesh count | **Done** |
+| — | Theme + settings — light/dark, language, relay switch | **Done** |
+| — | Survey capture — six-step wizard, schema v2, offline, proxy entry | **Done** |
 | 4 | Backend ingest | Not started |
 | 5 | Bulk plane — GATT, bloom digest | Not started (UUID allocated) |
 | 6 | iOS | Not started |
@@ -56,9 +58,18 @@ cd D:\Setu-App && ./gradlew :app:connectedDebugAndroidTest
 cd D:\Setu-App && ./gradlew :app:assembleRelease
 ```
 
-The release APK lands in `app/build/outputs/apk/release/app-release.apk` and is
-signed with the debug key so it installs without extra setup. **It is not a
-distributable build** — sign it properly before giving it to anyone.
+The release APK lands in `app/build/outputs/apk/release/app-release.apk`.
+
+**Signing.** It is signed with the release key at `D:\Setu-keys\setu-release.jks`,
+referenced through `keystore.properties` in the project root. Both are
+gitignored and the keystore itself lives outside this folder, so neither travels
+with the project. If `keystore.properties` is missing the build falls back to
+debug signing, which is fine locally and must never be used for an APK given to
+other people — the debug keystore password is public, so anyone could forge an
+update to it.
+
+Keep `D:\Setu-keys\` backed up. Losing it means you can never publish an update
+Android will accept as an update to an already-installed Setu.
 
 ## APK budget
 
@@ -67,7 +78,7 @@ distributable build** — sign it properly before giving it to anyone.
 | Build | Size |
 |---|---|
 | debug, unminified | ~11 MB |
-| **release, R8 full mode + resource shrinking** | **~1.14 MB** |
+| **release, R8 full mode + resource shrinking** | **~1.16 MB** |
 
 Check it after any dependency change:
 
@@ -140,9 +151,11 @@ Home → *Diagnostics*. This is field-test data, not decoration:
 - **Service starts this install** — if this climbs on its own, an OEM battery
   manager is killing the foreground service. That is the number the docs care
   most about.
-- **Rescuer view (demo)** — opens the sealed SOS body with the demo rescuer key
-  that ships in the APK, to show the location really is encrypted and really is
-  in there. Say out loud in any demo that key *distribution* is not implemented.
+- **Rescuer view (demo)** — on a **debug** build this opens the sealed SOS body
+  with the demo rescuer key, to show the location really is encrypted and really
+  is in there. A **release** build has no rescuer key and reports the body as
+  sealed, which is the correct behaviour for a file other people hold. Say out
+  loud in any demo that key *distribution* is not implemented.
 
 ---
 
@@ -152,11 +165,24 @@ Home → *Diagnostics*. This is field-test data, not decoration:
 in.setu.relay
 ├── wire/          Envelope codec, fragmentation, geo quantisation, PROTO_VERSION
 ├── crypto/        Ed25519, X25519, ChaCha20-Poly1305, sealed box, identity, keybook
-├── store/         SQLiteOpenHelper schema v1, MessageStore
+├── store/         SQLiteOpenHelper schema v2, MessageStore, SurveyStore
 ├── radio/beacon/  BLE advertiser + scanner, advertising data format
 ├── relay/         RelayEngine, RelayService, backoff scheduler, time source
-└── ui/            Compose screens
+├── sync/          (phase 3 — internet upload)
+└── ui/            Compose screens, theme tokens, survey/ wizard
 ```
+
+## Colour
+
+Neutral surfaces, one blue accent, and three saturated colours that each mean
+exactly one thing: **red is SOS, amber is CARRIED, green is DELIVERED and only
+on a real receipt**. The logo stays orange and green; the interface does not —
+the reasoning is **D26**.
+
+Screens never name a hex. The semantic roles live in `ui/Theme.kt` and are
+reached through `Setu.colors`, which is what keeps "CARRIED is never green" a
+property of the build rather than a rule someone has to remember. Light and dark
+both ship, with a three-way choice in Settings.
 
 Dependency direction is strictly downward. `wire` and `crypto` depend on nothing
 but the platform. `ui` depends on everything and nothing depends on it. `relay`
@@ -173,6 +199,51 @@ platform `SQLiteOpenHelper`, platform `java.security` + AndroidKeyStore,
 No Room, no Retrofit, no OkHttp, no Gson, no protobuf, no Tink/BouncyCastle/
 libsodium, no `play-services-*`, no Firebase, no Hilt, no Navigation component,
 no image loader. Four screens and a `when` beats a navigation graph.
+
+## Building a shareable APK
+
+```bash
+cd D:\Setu-App && ./gradlew clean :app:assembleRelease
+```
+
+Before handing the file to anyone, confirm what is in it rather than assuming:
+
+- the rescuer **private** key must be absent, and the two **public** keys
+  present — search the extracted APK for the key material both as ASCII hex and
+  as raw bytes, since the source writes it as a hex string;
+- no developer paths, usernames or email addresses;
+- `apksigner verify --print-certs` should show `CN=Setu`, not `CN=Android Debug`.
+
+## Surveys
+
+A six-step wizard from `Setu-docs/Basic UI workflow/`: personal details,
+location, damage, affected people, relief camp, review. It works with no network
+and no GPS, and a surveyor can enter a record **on behalf of** someone with no
+phone — the proxy toggle records that consent was given, which DPDP requires to
+come from the person the data is about.
+
+Every edit autosaves as a draft after a short pause, so a phone that dies mid-form
+loses nothing.
+
+**Aadhaar is sealed to the backend key the moment it is complete.** The device
+keeps a sealed blob, a salted hash for duplicate detection, and the last four
+digits — never the number. The visible consequence: correcting an Aadhaar on a
+saved survey means typing all twelve digits again, because nothing on the phone
+can recover them. The hash is *not* a privacy control (a 12-digit number is
+trivially brute-forced); the sealing is. See **D28**–**D30**.
+
+### What relays and what does not
+
+| | Transport |
+|---|---|
+| SOS, check-in | beacon plane, BLE advertisements |
+| Survey identity, location, casualty status | bulk plane over GATT — **phase 5** |
+| Damage detail, relief camp, photos | internet — **phase 3** |
+
+Neither transport for surveys is built yet, and the app says so on the Saved
+screen rather than implying a record has gone somewhere. What *is* built is the
+sealed record itself: saving a survey packs it (measured: 194 bytes plain, 242
+sealed) into `record`, ready for the bulk plane.
 
 ## Known gaps
 
@@ -191,5 +262,9 @@ no image loader. Four screens and a `when` beats a navigation graph.
   omits the flags AD for non-connectable advertising.** That is AOSP behaviour
   but not guaranteed by every OEM stack. `BeaconAdvertiser` logs
   `ADVERTISE_FAILED_DATA_TOO_LARGE` loudly if not — that log line is data.
-- **The rescuer private key ships in the APK.** It exists so the demo can show
-  the seal opening. Remove it from anything real.
+- **A release build cannot open a sealed body.** The rescuer private key exists
+  only in the debug source set, so the Rescuer demo screen works on a
+  development device and shows "sealed — this build holds no key to open it"
+  in a shared build. That is correct behaviour, not a bug: putting the rescuer
+  private key in a distributed APK would let every relay read every SOS
+  location, defeating D6 entirely. See **D19**.

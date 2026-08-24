@@ -39,9 +39,44 @@ object RelayParams {
      */
     const val SUPPRESSION_ENABLED = false
 
-    /** How long one advertising burst stays on air. */
-    const val BURST_MS = 300L
+    /** Shortest burst. Used when a message is young and repeats often anyway. */
+    const val BURST_MIN_MS = 300L
+
+    /**
+     * Longest burst. SCAN_MODE_BALANCED listens for roughly 1024 ms out of every
+     * 4096 ms, so a burst at least that long is almost certain to overlap a
+     * peer's listening window rather than land in its blind spot.
+     */
+    const val BURST_MAX_MS = 1_200L
+
+    /**
+     * How long a burst stays on air, given the message's current advertising
+     * interval from [SCHEDULE].
+     *
+     * A fixed 300 ms burst was wrong and it is why devices "sometimes" failed to
+     * see each other. Against a ~25% duty-cycle scanner a 300 ms burst overlaps a
+     * listening window only about a quarter of the time. A young message repeats
+     * every 500 ms so it gets many chances per second and always arrived; but
+     * past 120 s the schedule drops to one burst per 30 s, and one 25% chance
+     * every 30 s stretches expected detection into minutes.
+     *
+     * So the burst grows as the gap grows: rare whispers are made long enough to
+     * be heard, frequent ones stay short. Airtime is bounded either way — at the
+     * 30 s interval this is 1.2 s on air per 30 s, or 4% duty.
+     *
+     * This is a demo-scale trade. It buys detection probability with channel
+     * load, which is the opposite of D5's instinct at 400-phone density, so it
+     * is capped and flagged for revisiting with field data.
+     */
+    fun burstMsFor(intervalMs: Long): Long =
+        (intervalMs / 25).coerceIn(BURST_MIN_MS, BURST_MAX_MS)
 
     /** Neighbour freshness window for neighbourCount(). */
     const val NEIGHBOUR_WINDOW_MS = 60_000L
+
+    /**
+     * How often the presence beacon repeats. Small, cheap, and independent of
+     * whether this phone has anything to say — see PresenceAdvertiser.
+     */
+    const val PRESENCE_INTERVAL_MS = 1_000L
 }

@@ -6,6 +6,8 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import `in`.setu.relay.wire.Frag
@@ -27,6 +29,7 @@ import `in`.setu.relay.wire.Proto
 class BeaconScanner(
     private val adapter: BluetoothAdapter?,
     private val onEnvelope: (envelope: ByteArray, rssi: Int) -> Unit,
+    private val onPresence: (originKeyId: ByteArray, rssi: Int) -> Unit = { _, _ -> },
 ) {
 
     @Volatile
@@ -46,8 +49,20 @@ class BeaconScanner(
         private set
 
     @Volatile
+    var presenceSeen: Long = 0L
+        private set
+
+    @Volatile
     var lastError: String? = null
         private set
+
+    private val handler = Handler(Looper.getMainLooper())
+
+    /** True between start() and shutdown(); gates the retry loop. */
+    @Volatile
+    private var wanted = false
+
+    private var retryIndex = 0
 
     private val reassembly = HashMap<String, Group>()
 
@@ -72,10 +87,22 @@ class BeaconScanner(
             scanning = false
             lastError = "scan failed error=$errorCode"
             Log.w(TAG, "scan failed, error=$errorCode")
+            // Previously this was the end of the road: scanning stayed false and
+            // nothing ever tried again, so one transient failure silenced the
+            // device until the service was restarted. SCAN_FAILED_ALREADY_STARTED
+            // in particular is recoverable and used to be fatal.
+            scheduleRetry()
         }
     }
 
     private fun handlePayload(data: ByteArray, rssi: Int) {
+        // Presence first: it is the cheapest check and by far the most common
+        // packet, since every running relay sends one every second.
+        BeaconFormat.unwrapPresence(data)?.let {
+            presenceSeen++
+            onPresence(it, rssi)
+            return
+        }
         BeaconFormat.unwrapExtended(data)?.let {
             onEnvelope(it, rssi)
             return
@@ -107,7 +134,29 @@ class BeaconScanner(
         }
     }
 
+    /**
+     * Restarts the scan from scratch. Called when the Bluetooth adapter comes
+     * back, and periodically, because some stacks quietly stop delivering
+     * results on a very long-lived scan.
+     */
+    fun restart() {
+        stop()
+        start()
+    }
+
+    private fun scheduleRetry() {
+        if (!wanted) return
+        val delay = RETRY_DELAYS_MS[retryIndex.coerceAtMost(RETRY_DELAYS_MS.lastIndex)]
+        retryIndex++
+        Log.i(TAG, "retrying scan in ${delay}ms (attempt $retryIndex)")
+        // Android blocks an app that calls startScan more than 5 times in 30 s,
+        // so the backoff is not politeness — a tight retry loop would get this
+        // process banned from scanning entirely.
+        handler.postDelayed({ if (wanted) start() }, delay)
+    }
+
     fun start(): Boolean {
+        wanted = true
         val scanner = runCatching { adapter?.bluetoothLeScanner }.getOrNull()
         if (scanner == null) {
             lastError = "no BLE scanner"
@@ -136,11 +185,13 @@ class BeaconScanner(
         return try {
             scanner.startScan(filters, settings, callback)
             scanning = true
+            retryIndex = 0
             Log.i(TAG, "scanning started, legacyOnly=${!extended}")
             true
         } catch (t: Throwable) {
             lastError = t.javaClass.simpleName
             Log.w(TAG, "startScan threw ${t.javaClass.simpleName}")
+            scheduleRetry()
             false
         }
     }
@@ -150,10 +201,24 @@ class BeaconScanner(
         runCatching { adapter?.bluetoothLeScanner?.stopScan(callback) }
     }
 
+    /** Stops for good; cancels any pending retry. */
+    fun shutdown() {
+        wanted = false
+        handler.removeCallbacksAndMessages(null)
+        stop()
+    }
+
     companion object {
         private const val TAG = "SetuScanner"
 
         /** A partial fragment group past this age is abandoned. */
         private const val REASSEMBLY_TIMEOUT_MS = 30_000L
+
+        /**
+         * Backoff between scan retries. Deliberately never faster than ~6 s:
+         * Android bans an app that calls startScan more than 5 times in 30 s,
+         * and being banned is a far worse failure than waiting.
+         */
+        private val RETRY_DELAYS_MS = longArrayOf(6_000, 10_000, 20_000, 60_000)
     }
 }

@@ -56,5 +56,56 @@ object BeaconFormat {
         return data.copyOfRange(2, EXTENDED_SIZE)
     }
 
+    // Presence is 11 bytes, a fragment is 27 and an extended beacon is 144, so
+    // length alone separates the three. An earlier version of this also checked
+    // for the presence magic here, which would have discarded roughly one
+    // fragment in 65536 — the first two bytes of a fragment are msg_id, so they
+    // are random and can legitimately be 'S','P'.
     fun isLegacyFragment(data: ByteArray): Boolean = data.size == LEGACY_SIZE
+
+    // -------------------------------------------------------------- presence
+
+    /**
+     * The presence beacon: "a Setu phone is here", sent whether or not this
+     * device has anything to relay.
+     *
+     *     0      0x53 'S'
+     *     1      0x50 'P'          distinguishes presence from a 'T' envelope
+     *     2..9   origin_key_id     8 bytes, same identifier the envelope carries
+     *     10     flags             bit 0 set when a GATT server is listening
+     *     total 11 bytes
+     *
+     * Wrapped in a legacy connectable advertisement it costs 18 of the 31
+     * available bytes, so it fits on every handset with no fragmentation, and it
+     * reuses the manufacturer-data scan filter the beacon plane already installs.
+     *
+     * PRIVACY COST, recorded as D21. `origin_key_id` is stable, and this moves it
+     * from "broadcast while I have a message" to "broadcast continuously", which
+     * makes a device followable by anyone listening. It is not a new class of
+     * exposure — every envelope already carries the same identifier in clear —
+     * but the duty cycle is new. It is accepted because the peer table keys on
+     * `key_id` for sync history (docs/06) and a rotating id would break that.
+     */
+    const val MAGIC_P = 0x50.toByte()  // 'P'
+
+    const val PRESENCE_SIZE = 11
+
+    const val PRESENCE_FLAG_BULK = 0x01
+
+    fun wrapPresence(originKeyId: ByteArray, bulkAvailable: Boolean): ByteArray {
+        require(originKeyId.size == Proto.LEN_ORIGIN_KEY_ID) { "key id must be 8 bytes" }
+        val out = ByteArray(PRESENCE_SIZE)
+        out[0] = MAGIC_0
+        out[1] = MAGIC_P
+        originKeyId.copyInto(out, 2)
+        out[10] = if (bulkAvailable) PRESENCE_FLAG_BULK.toByte() else 0
+        return out
+    }
+
+    /** The advertised key id, or null when this is not a Setu presence beacon. */
+    fun unwrapPresence(data: ByteArray): ByteArray? {
+        if (data.size != PRESENCE_SIZE) return null
+        if (data[0] != MAGIC_0 || data[1] != MAGIC_P) return null
+        return data.copyOfRange(2, 10)
+    }
 }

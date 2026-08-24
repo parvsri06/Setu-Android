@@ -62,7 +62,7 @@ class BeaconAdvertiser(
      * Puts [envelope] on air for one burst and calls [onDone] when the burst is
      * over, whether it succeeded or not. Never throws.
      */
-    fun burst(envelope: ByteArray, onDone: () -> Unit) {
+    fun burst(envelope: ByteArray, burstMs: Long = RelayParams.BURST_MIN_MS, onDone: () -> Unit) {
         val adv = advertiser
         if (adv == null) {
             lastError = "no BLE advertiser"
@@ -79,8 +79,8 @@ class BeaconAdvertiser(
         }
         stop()
         try {
-            if (extendedSupported) burstExtended(adv, envelope, onDone)
-            else burstLegacy(adv, envelope, onDone)
+            if (extendedSupported) burstExtended(adv, envelope, burstMs, onDone)
+            else burstLegacy(adv, envelope, burstMs, onDone)
         } catch (t: Throwable) {
             lastError = t.javaClass.simpleName
             Log.w(TAG, "burst failed: ${t.javaClass.simpleName}: ${t.message}")
@@ -90,7 +90,12 @@ class BeaconAdvertiser(
 
     // -------------------------------------------------------------- extended
 
-    private fun burstExtended(adv: BluetoothLeAdvertiser, envelope: ByteArray, onDone: () -> Unit) {
+    private fun burstExtended(
+        adv: BluetoothLeAdvertiser,
+        envelope: ByteArray,
+        burstMs: Long,
+        onDone: () -> Unit,
+    ) {
         val params = AdvertisingSetParameters.Builder()
             .setLegacyMode(false)
             .setConnectable(false)
@@ -135,18 +140,23 @@ class BeaconAdvertiser(
         // duration is in 10 ms units; the controller stops the set for us.
         adv.startAdvertisingSet(
             params, data, null, null, null,
-            (RelayParams.BURST_MS / 10).toInt(), 0, cb,
+            (burstMs / 10).toInt(), 0, cb,
         )
         // Belt and braces: some controllers do not deliver onAdvertisingSetStopped.
-        handler.postDelayed({ finish() }, RelayParams.BURST_MS + GRACE_MS)
+        handler.postDelayed({ finish() }, burstMs + GRACE_MS)
     }
 
     // ---------------------------------------------------------------- legacy
 
-    private fun burstLegacy(adv: BluetoothLeAdvertiser, envelope: ByteArray, onDone: () -> Unit) {
+    private fun burstLegacy(
+        adv: BluetoothLeAdvertiser,
+        envelope: ByteArray,
+        burstMs: Long,
+        onDone: () -> Unit,
+    ) {
         legacyQueue = Frag.split(envelope)
         legacyIndex = 0
-        val perFragmentMs = (RelayParams.BURST_MS + LEGACY_EXTRA_MS) / legacyQueue.size
+        val perFragmentMs = (burstMs + LEGACY_EXTRA_MS) / legacyQueue.size
         var finished = false
 
         val settings = AdvertiseSettings.Builder()

@@ -84,7 +84,7 @@ fun SosScreen(engine: RelayEngine, state: RelayState, onBack: () -> Unit) {
                 .fillMaxWidth()
                 .height(Setu.SosTouch * 2)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Setu.Orange)
+                .background(Setu.colors.sos)
                 .pointerInput(sending) {
                     detectTapGestures(
                         onPress = {
@@ -112,7 +112,7 @@ fun SosScreen(engine: RelayEngine, state: RelayState, onBack: () -> Unit) {
                 Icon(
                     painterResource(R.drawable.ic_sos),
                     contentDescription = null,
-                    tint = androidx.compose.ui.graphics.Color.Unspecified,
+                    tint = Setu.colors.onSos,
                     modifier = Modifier.size(52.dp),
                 )
                 Spacer(Modifier.height(8.dp))
@@ -122,7 +122,7 @@ fun SosScreen(engine: RelayEngine, state: RelayState, onBack: () -> Unit) {
                         holdProgress > 0f -> stringResource(R.string.sos_holding)
                         else -> stringResource(R.string.sos_hold)
                     },
-                    color = Setu.Navy,
+                    color = Setu.colors.onSos,
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
                 )
@@ -133,13 +133,19 @@ fun SosScreen(engine: RelayEngine, state: RelayState, onBack: () -> Unit) {
             LinearProgressIndicator(
                 progress = { holdProgress },
                 modifier = Modifier.fillMaxWidth().height(8.dp),
-                color = Setu.Navy,
+                color = Setu.colors.sos,
             )
         }
 
         if (lastResult != null) {
             SetuCard {
-                Text(stringResource(R.string.sos_sent), style = MaterialTheme.typography.titleMedium, color = Setu.Green)
+                // "Sent" here means it left this phone, not that it arrived. It uses
+                // the ordinary accent, not the delivered green.
+                Text(
+                    stringResource(R.string.sos_sent),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 Text(
                     stringResource(
                         if (hadFix == true) R.string.sos_location_sealed else R.string.sos_no_fix,
@@ -175,7 +181,7 @@ fun MessageStatusCard(type: Int, status: Int, carriers: Int, hopCount: Int, idHe
             Icon(
                 painterResource(statusIcon(status)),
                 contentDescription = null,
-                tint = androidx.compose.ui.graphics.Color.Unspecified,
+                tint = statusColor(status),
                 modifier = Modifier.size(28.dp),
             )
             Spacer(Modifier.width(10.dp))
@@ -192,7 +198,7 @@ fun MessageStatusCard(type: Int, status: Int, carriers: Int, hopCount: Int, idHe
         if (status == `in`.setu.relay.wire.Status.CARRIED) {
             Text(
                 stringResource(R.string.status_carried_warning),
-                color = Setu.Orange,
+                color = Setu.colors.carriedText,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

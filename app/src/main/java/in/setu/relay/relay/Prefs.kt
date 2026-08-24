@@ -2,7 +2,12 @@ package `in`.setu.relay.relay
 
 import android.content.Context
 
-/** Small persisted flags. Deliberately not a settings screen — see docs/07-ui-spec.md. */
+/**
+ * Small persisted flags. docs/07-ui-spec.md caps settings at "language and
+ * battery"; theme is the one addition, and it earns its place because a relief
+ * worker reading this outdoors in daylight and a household reading it at night
+ * in a shelter need opposite screens.
+ */
 class Prefs(context: Context) {
 
     private val p = context.applicationContext.getSharedPreferences("setu_app", Context.MODE_PRIVATE)
@@ -26,6 +31,15 @@ class Prefs(context: Context) {
     var language: String
         get() = p.getString("language", "") ?: ""
         set(v) = p.edit().putString("language", v).apply()
+
+    /**
+     * "system", "light" or "dark". Stored as a plain string rather than a UI
+     * enum so `relay` keeps not importing `ui` — dependency direction is
+     * strictly downward, per docs/01-architecture.md. `ui/Theme.kt` parses it.
+     */
+    var themeMode: String
+        get() = p.getString("theme_mode", "system") ?: "system"
+        set(v) = p.edit().putString("theme_mode", v).apply()
 
     /** The contact identifier last used for a check-in. */
     var lastContact: String

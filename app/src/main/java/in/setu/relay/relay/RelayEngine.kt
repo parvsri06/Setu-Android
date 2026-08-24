@@ -3,15 +3,18 @@ package `in`.setu.relay.relay
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.Log
+import androidx.core.content.ContextCompat
 import `in`.setu.relay.crypto.Identity
 import `in`.setu.relay.crypto.KeyBook
 import `in`.setu.relay.radio.beacon.BeaconAdvertiser
 import `in`.setu.relay.radio.beacon.BeaconScanner
+import `in`.setu.relay.radio.beacon.PresenceAdvertiser
 import `in`.setu.relay.store.MessageStore
 import `in`.setu.relay.store.StoredMessage
 import `in`.setu.relay.wire.AdvertState
@@ -58,7 +61,37 @@ class RelayEngine(context: Context) {
         (app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
 
     private val advertiser = BeaconAdvertiser(adapter)
-    private val scanner = BeaconScanner(adapter) { envelope, rssi -> onEnvelope(envelope, rssi) }
+    private val presence = PresenceAdvertiser(adapter)
+    private val scanner = BeaconScanner(
+        adapter = adapter,
+        onEnvelope = { envelope, rssi -> onEnvelope(envelope, rssi) },
+        onPresence = { keyId, _ -> onPresence(keyId) },
+    )
+
+    /**
+     * Restarts the radio when Bluetooth is toggled off and on. Without this the
+     * scan died with the adapter and never came back, which looked exactly like
+     * "sometimes it stops seeing other phones".
+     */
+    private val adapterWatcher = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != BluetoothAdapter.ACTION_STATE_CHANGED) return
+            when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)) {
+                BluetoothAdapter.STATE_ON -> if (running) {
+                    Log.i(TAG, "bluetooth back on, restarting radio")
+                    scanner.restart()
+                    presence.start(identity.keyId)
+                    publish()
+                }
+
+                BluetoothAdapter.STATE_TURNING_OFF -> {
+                    scanner.stop()
+                    presence.stop()
+                    publish()
+                }
+            }
+        }
+    }
 
     private val _state = MutableStateFlow(RelayState(identityKeyId = identity.keyIdHex))
     val state: StateFlow<RelayState> = _state
@@ -69,14 +102,37 @@ class RelayEngine(context: Context) {
     @Volatile
     private var running = false
 
+    /** Last shared-slot presence burst, single-advertising-set devices only. */
+    private var lastSharedPresenceMs = 0L
+
     // ------------------------------------------------------------- lifecycle
 
     fun start() {
         if (running) return
         running = true
+        runCatching {
+            ContextCompat.registerReceiver(
+                app,
+                adapterWatcher,
+                IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+        }
         scope.launch {
             restoreSchedules()
             val ok = scanner.start()
+            // Presence runs for as long as the relay does, independent of
+            // whether there is anything in the store to advertise. This is what
+            // makes two idle phones able to see each other at all.
+            //
+            // On a chipset with only one advertising slot, running it
+            // continuously would starve the beacon plane, so there it is
+            // time-shared from the idle branch of advertisingLoop instead.
+            if (presence.multipleSetsSupported) {
+                presence.start(identity.keyId)
+            } else {
+                Log.i(TAG, "single advertising slot; presence will time-share with beacons")
+            }
             publish(scanningOverride = ok)
             loop = scope.launch { advertisingLoop() }
             housekeeping = scope.launch { housekeepingLoop() }
@@ -87,7 +143,9 @@ class RelayEngine(context: Context) {
         running = false
         loop?.cancel()
         housekeeping?.cancel()
-        scanner.stop()
+        runCatching { app.unregisterReceiver(adapterWatcher) }
+        scanner.shutdown()
+        presence.stop()
         advertiser.stop()
         publish()
     }
@@ -135,6 +193,19 @@ class RelayEngine(context: Context) {
                 nowMono + envelope.ttlMillis,
             )
             Log.i(TAG, "originated ${MsgType.name(envelope.type)} ${Codec.hex(envelope.msgId)}")
+            publish()
+        }
+    }
+
+    /**
+     * A presence beacon off the air: a Setu phone is nearby but has said nothing
+     * else. This is the only path by which an idle peer becomes visible, and its
+     * absence was the detection bug — see PresenceAdvertiser.
+     */
+    private fun onPresence(originKeyId: ByteArray) {
+        if (originKeyId.contentEquals(identity.keyId)) return  // our own echo
+        scope.launch {
+            store.touchPeer(originKeyId, TimeSource.wallMs())
             publish()
         }
     }
@@ -239,6 +310,9 @@ class RelayEngine(context: Context) {
             )
 
             if (due.isEmpty()) {
+                // Nothing to relay. On a single-slot chipset this idle time is
+                // the only chance presence gets, so use it.
+                if (!presence.multipleSetsSupported) sharedSlotPresence(now)
                 publish()
                 delay(scheduler.nextWakeMs(now).coerceIn(200L, 2_000L))
                 continue
@@ -254,7 +328,11 @@ class RelayEngine(context: Context) {
                 }
                 store.setAdvertState(stored.msgId, AdvertState.ADVERTISING)
                 _state.value = _state.value.copy(advertisingId = entry.msgId)
-                awaitBurst(stored.envelope)
+                // Burst length tracks the gap between bursts: a message that
+                // only speaks once every 30 s has to speak for long enough to
+                // land inside a peer's scan window. See RelayParams.burstMsFor.
+                val interval = scheduler.intervalFor(now - entry.storedAtMs)
+                awaitBurst(stored.envelope, RelayParams.burstMsFor(interval))
                 scheduler.onAdvertised(entry, TimeSource.monotonicMs())
                 store.setAdvertState(stored.msgId, AdvertState.BACKOFF)
                 _state.value = _state.value.copy(advertisingId = null)
@@ -264,9 +342,25 @@ class RelayEngine(context: Context) {
         }
     }
 
-    private suspend fun awaitBurst(envelope: ByteArray) = suspendCancellableCoroutine { cont ->
+    /**
+     * One presence burst on the shared advertising slot, for chipsets that
+     * cannot hold two sets. Long enough to overlap a peer's scan window, rare
+     * enough to leave the slot free for real traffic.
+     */
+    private suspend fun sharedSlotPresence(nowMs: Long) {
+        if (nowMs - lastSharedPresenceMs < SHARED_PRESENCE_EVERY_MS) return
+        lastSharedPresenceMs = nowMs
+        if (!presence.start(identity.keyId)) return
+        delay(RelayParams.BURST_MAX_MS)
+        presence.stop()
+    }
+
+    private suspend fun awaitBurst(
+        envelope: ByteArray,
+        burstMs: Long,
+    ) = suspendCancellableCoroutine { cont ->
         var resumed = false
-        advertiser.burst(envelope) {
+        advertiser.burst(envelope, burstMs) {
             if (!resumed) {
                 resumed = true
                 if (cont.isActive) cont.resume(Unit)
@@ -330,6 +424,7 @@ class RelayEngine(context: Context) {
             packetsSeen = scanner.packetsSeen,
             fragmentsSeen = scanner.fragmentsSeen,
             reassembled = scanner.reassembled,
+            presenceSeen = scanner.presenceSeen,
             burstsSent = advertiser.burstsSent,
             knownKeys = keyBook.size(),
             batteryPct = batteryPercent(),
@@ -369,6 +464,13 @@ class RelayEngine(context: Context) {
         private const val TAG = "SetuRelay"
         private const val SLOT_GAP_MS = 120L
         private const val HOUSEKEEPING_MS = 60_000L
+
+        /**
+         * How often presence gets the shared advertising slot on chipsets that
+         * cannot hold two sets. Five seconds keeps an idle phone discoverable
+         * within a few scan windows while leaving the slot free almost always.
+         */
+        private const val SHARED_PRESENCE_EVERY_MS = 5_000L
 
         // Holds the application context, not an Activity, and lives as long as
         // the process by design — the relay must outlive every screen.
