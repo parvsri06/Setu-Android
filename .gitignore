@@ -24,3 +24,6 @@ keystore.properties
 
 # Per-machine IDE state
 /.idea/deploymentTargetSelector.xml
+
+# The announcement authority private seed. Never commit.
+authority-key.txt

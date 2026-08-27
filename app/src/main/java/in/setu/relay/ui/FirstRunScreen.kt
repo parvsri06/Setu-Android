@@ -67,7 +67,7 @@ fun FirstRunScreen(
                             .fillMaxWidth()
                             .defaultMinSize(minHeight = Setu.Touch)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(MaterialTheme.colorScheme.surface)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .clickable {
                                 prefs.language = tag
                                 // Recreating is the cheapest correct way to
@@ -131,7 +131,7 @@ fun FirstRunScreen(
                 BigButton(
                     label = stringResource(R.string.action_next),
                     iconRes = R.drawable.ic_status_carried,
-                    container = MaterialTheme.colorScheme.surface,
+                    container = MaterialTheme.colorScheme.surfaceVariant,
                     content = MaterialTheme.colorScheme.onSurface,
                     enabled = permissionsGranted,
                 ) { step = 3 }

@@ -81,6 +81,24 @@ fun DiagnosticsScreen(
             }
         }
 
+        SetuCard {
+            Text(
+                stringResource(
+                    if (state.bulkServerUp) R.string.diag_bulk_up else R.string.diag_bulk_down,
+                ),
+                color = if (state.bulkServerUp) Setu.colors.deliveredText else Setu.colors.warnText,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            LabelValue(stringResource(R.string.diag_records_held), state.recordsHeld.toString())
+            LabelValue(stringResource(R.string.diag_records_others), state.recordsForOthers.toString())
+            LabelValue(stringResource(R.string.diag_bulk_sessions), state.bulkSessions.toString())
+            LabelValue(stringResource(R.string.diag_records_pushed), state.recordsPushed.toString())
+            LabelValue(stringResource(R.string.diag_records_received), state.recordsReceived.toString())
+            state.bulkLastResult?.let {
+                Text(it, color = Setu.colors.muted, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
         if (state.wallClockJumped) {
             Text(
                 stringResource(R.string.diag_clock_jump),
@@ -98,7 +116,7 @@ fun DiagnosticsScreen(
         BigButton(
             label = stringResource(R.string.rescuer_title),
             iconRes = R.drawable.ic_status_delivered,
-            container = MaterialTheme.colorScheme.surface,
+            container = MaterialTheme.colorScheme.surfaceVariant,
             content = MaterialTheme.colorScheme.onSurface,
             onClick = onRescuer,
         )

@@ -31,7 +31,9 @@ import `in`.setu.relay.ui.SetuCard
 @Composable
 fun SurveyListScreen(
     surveys: List<Survey>,
+    received: List<`in`.setu.relay.wire.SurveyRecord.Decoded>,
     onOpen: (String) -> Unit,
+    onOpenReceived: (String) -> Unit,
     onNew: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -44,6 +46,13 @@ fun SurveyListScreen(
             container = MaterialTheme.colorScheme.primary,
             content = MaterialTheme.colorScheme.onPrimary,
             onClick = onNew,
+        )
+
+        Text(
+            stringResource(R.string.survey_local_count, surveys.size) + "   ·   " +
+                stringResource(R.string.survey_received_count, received.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         if (surveys.isEmpty()) {
@@ -87,6 +96,61 @@ fun SurveyListScreen(
                 if (people > 0) {
                     Text(
                         stringResource(R.string.survey_people_count, people),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        // Surveys that arrived over the mesh from other phones. They are read
+        // only: this device did not collect them and must not rewrite someone
+        // else's record, which would also break the signature story.
+        Text(
+            stringResource(R.string.survey_received_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        if (received.isEmpty()) {
+            Text(
+                stringResource(R.string.survey_received_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        for (r in received) {
+            SetuCard(Modifier.clickable { onOpenReceived(r.surveyId) }) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        r.name.ifBlank { stringResource(R.string.survey_unnamed) },
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        stringResource(R.string.survey_received_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                // Record v3 relays position rather than an address block, so
+                // "where did this come from" is coordinates now.
+                if (r.hasFix) {
+                    Text(
+                        String.format(java.util.Locale.US, "%.4f, %.4f", r.lat, r.lon),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                if (r.aadhaarLast4.isNotBlank()) {
+                    Text(
+                        AadhaarId.mask(r.aadhaarLast4),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (r.capturedAt > 0L) {
+                    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+                    Text(
+                        java.text.SimpleDateFormat("dd MMM HH:mm", locale)
+                            .format(java.util.Date(r.capturedAt)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

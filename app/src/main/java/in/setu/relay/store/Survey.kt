@@ -53,6 +53,21 @@ data class Survey(
     val campLocation: String = "",
     val needs: String = "",
 
+    /**
+     * Where and when the survey was taken, captured automatically at save time
+     * exactly as an SOS captures its fix. A surveyor under pressure will not
+     * type coordinates, and "which village was this?" is the first question an
+     * officer asks of a record that arrived over the mesh.
+     *
+     * Unlike an SOS location this is **not sealed**, because the whole point is
+     * that the phones carrying it can show where it came from. NaN means no fix
+     * was available — indoors, or location switched off.
+     */
+    val lat: Double = Double.NaN,
+    val lon: Double = Double.NaN,
+    /** Wall clock at capture, millis. Untrusted like every offline clock. */
+    val capturedAt: Long = 0L,
+
     val people: List<Person> = emptyList(),
 ) {
     // Generated equals/hashCode would compare aadhaarSealed by reference. It is

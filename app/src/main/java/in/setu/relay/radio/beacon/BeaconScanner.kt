@@ -2,6 +2,7 @@ package `in`.setu.relay.radio.beacon
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -29,7 +30,14 @@ import `in`.setu.relay.wire.Proto
 class BeaconScanner(
     private val adapter: BluetoothAdapter?,
     private val onEnvelope: (envelope: ByteArray, rssi: Int) -> Unit,
-    private val onPresence: (originKeyId: ByteArray, rssi: Int) -> Unit = { _, _ -> },
+    // The device is needed to open a GATT connection: the bulk plane can only
+    // dial a peer it has an address for, and a scan result is where that comes from.
+    private val onPresence: (
+        originKeyId: ByteArray,
+        device: BluetoothDevice?,
+        bulk: Boolean,
+        rssi: Int,
+    ) -> Unit = { _, _, _, _ -> },
 ) {
 
     @Volatile
@@ -76,7 +84,7 @@ class BeaconScanner(
             val record = result?.scanRecord ?: return
             val data = record.getManufacturerSpecificData(BeaconFormat.COMPANY_ID) ?: return
             packetsSeen++
-            handlePayload(data, result.rssi)
+            handlePayload(data, result.rssi, result.device)
         }
 
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
@@ -95,12 +103,12 @@ class BeaconScanner(
         }
     }
 
-    private fun handlePayload(data: ByteArray, rssi: Int) {
+    private fun handlePayload(data: ByteArray, rssi: Int, device: BluetoothDevice? = null) {
         // Presence first: it is the cheapest check and by far the most common
         // packet, since every running relay sends one every second.
         BeaconFormat.unwrapPresence(data)?.let {
             presenceSeen++
-            onPresence(it, rssi)
+            onPresence(it, device, BeaconFormat.presenceHasBulk(data), rssi)
             return
         }
         BeaconFormat.unwrapExtended(data)?.let {

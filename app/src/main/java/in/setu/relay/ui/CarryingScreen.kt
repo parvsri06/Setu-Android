@@ -57,6 +57,23 @@ fun CarryingScreen(engine: RelayEngine, state: RelayState, onBack: () -> Unit) {
             )
         }
 
+        // Survey records arrive over the bulk plane and are sealed to the
+        // backend key, so this device genuinely cannot read one it is carrying.
+        // Saying so is the entire point of this screen.
+        if (state.recordsForOthers > 0) {
+            SetuCard {
+                Text(
+                    stringResource(R.string.carrying_records, state.recordsForOthers),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    stringResource(R.string.carrying_records_note),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
         if (items.isEmpty()) {
             Text(
                 stringResource(R.string.carrying_empty),

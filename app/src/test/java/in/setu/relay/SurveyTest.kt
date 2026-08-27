@@ -51,11 +51,10 @@ class SurveyTest {
 
     @Test
     fun `record round-trips including non-latin script`() {
-        val original = sample(
-            listOf(
-                Person("p1", "s", 0, "অনিতা", 20, Gender.FEMALE, PersonStatus.ALIVE, "Delhi"),
-                Person("p2", "s", 1, "ৰমেশ", 54, Gender.MALE, PersonStatus.MISSING, "Majuli"),
-            ),
+        val original = sample().copy(
+            lat = 26.14450,
+            lon = 91.73620,
+            capturedAt = 1_756_000_000_000L,
         )
         val decoded = SurveyRecord.decodeOrNull(SurveyRecord.encode(original))!!
 
@@ -65,47 +64,55 @@ class SurveyTest {
         assertEquals(original.mobile, decoded.mobile)
         assertEquals(original.familyId, decoded.familyId)
         assertEquals(original.aadhaarLast4, decoded.aadhaarLast4)
-        assertEquals(original.village, decoded.village)
-        assertEquals(original.pin, decoded.pin)
         assertTrue(decoded.isProxy)
         assertTrue(decoded.proxyConsent)
 
-        assertEquals(2, decoded.people.size)
-        assertEquals("অনিতা", decoded.people[0].name)
-        assertEquals(20, decoded.people[0].age)
-        assertEquals(PersonStatus.ALIVE, decoded.people[0].status)
-        assertEquals(PersonStatus.MISSING, decoded.people[1].status)
-        assertEquals(Gender.MALE, decoded.people[1].gender)
+        // Coordinates are fixed point at 1e-6 degrees, roughly 11 cm.
+        assertTrue(decoded.hasFix)
+        assertEquals(26.14450, decoded.lat, 1e-5)
+        assertEquals(91.73620, decoded.lon, 1e-5)
+        assertEquals(1_756_000_000L, decoded.capturedAt / 1000L)
     }
 
     @Test
-    fun `damage description and photos never reach the wire`() {
-        val encoded = SurveyRecord.encode(sample())
-        val asText = String(encoded, Charsets.UTF_8)
-        // The description is the bulkiest free-text field and is internet-only.
-        assertFalse(asText.contains("furniture"))
-    }
-
-    @Test
-    fun `unanswered person fields survive as unanswered`() {
-        val original = sample(
-            listOf(Person("p1", "s", 0, "X", -1, Gender.UNSET, PersonStatus.UNSET, "")),
-        )
+    fun `southern and western hemispheres survive the round trip`() {
+        // Longitude and latitude are signed on the wire. Getting this wrong is
+        // invisible in Assam and catastrophic anywhere west of Greenwich.
+        val original = sample().copy(lat = -33.86880, lon = -70.64270, capturedAt = 1L)
         val decoded = SurveyRecord.decodeOrNull(SurveyRecord.encode(original))!!
-        assertEquals(-1, decoded.people[0].age)
-        assertEquals(Gender.UNSET, decoded.people[0].gender)
-        assertEquals(PersonStatus.UNSET, decoded.people[0].status)
+        assertEquals(-33.86880, decoded.lat, 1e-5)
+        assertEquals(-70.64270, decoded.lon, 1e-5)
     }
 
     @Test
-    fun `record stays well inside the bulk plane budget`() {
-        val many = (0 until 8).map {
-            Person("p$it", "s", it, "নামটো দীঘল", 30, Gender.OTHER, PersonStatus.ALIVE, "কমলাবাৰী")
-        }
-        val size = SurveyRecord.encode(sample(many)).size
-        // docs/01 sizes bulk records at 2-8 KB; a family of eight must not
-        // approach that, or a sync window will not fit one contact.
-        assertTrue("record was $size bytes", size in 1..2048)
+    fun `a record without a fix decodes as having none`() {
+        val decoded = SurveyRecord.decodeOrNull(SurveyRecord.encode(sample()))!!
+        assertFalse(decoded.hasFix)
+        assertTrue(decoded.lat.isNaN())
+    }
+
+    @Test
+    fun `only identity fields reach the wire`() {
+        val encoded = SurveyRecord.encode(
+            sample().copy(lat = 26.1, lon = 91.7, capturedAt = 1L),
+        )
+        val asText = String(encoded, Charsets.UTF_8)
+        // Everything below stays on the phone that collected it: v3 relays
+        // identity, position and time and nothing else.
+        assertFalse(asText.contains("furniture"))
+        assertFalse(asText.contains("Jorhat"))
+        assertFalse(asText.contains("Kamalabari"))
+        assertFalse(asText.contains("785104"))
+    }
+
+    @Test
+    fun `record fits in a single GATT write`() {
+        val size = SurveyRecord.encode(
+            sample().copy(lat = 26.1, lon = 91.7, capturedAt = 1L),
+        ).size
+        // The whole point of v3: one chunk, so a survey is one write rather than
+        // a conversation. MAX_CHUNK is 400 bytes.
+        assertTrue("record was $size bytes", size in 1..400)
     }
 
     // ------------------------------------------------------- hostile input

@@ -91,6 +91,37 @@ class SetuDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
         )
 
         createSurveyTables(db)
+        createHopTable(db)
+    }
+
+    /**
+     * Schema v4 — every observation of every message.
+     *
+     * The primary key is `(msg_id, key_id)`, which is what bounds this table: a
+     * message is capped at 32 hops, so one message can never contribute more
+     * than 32 rows however long it circulates.
+     *
+     * Two indexes because the same rows are read two completely different ways —
+     * by message to rebuild a route, and by phone to answer "when did anyone
+     * last hear from this handset".
+     */
+    private fun createHopTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE hop (
+              msg_id     BLOB NOT NULL,
+              key_id     BLOB NOT NULL,
+              heard_at   INTEGER NOT NULL,
+              lat        REAL,
+              lon        REAL,
+              hop_count  INTEGER NOT NULL,
+              rssi       INTEGER NOT NULL DEFAULT 0,
+              PRIMARY KEY (msg_id, key_id)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX idx_hop_msg ON hop(msg_id, hop_count)")
+        db.execSQL("CREATE INDEX idx_hop_key ON hop(key_id, heard_at)")
     }
 
     /**
@@ -138,7 +169,11 @@ class SetuDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
               in_camp        INTEGER NOT NULL DEFAULT 0,
               camp_name      TEXT,
               camp_location  TEXT,
-              needs          TEXT
+              needs          TEXT,
+
+              lat            REAL,
+              lon            REAL,
+              captured_at    INTEGER NOT NULL DEFAULT 0
             )
             """.trimIndent(),
         )
@@ -179,6 +214,18 @@ class SetuDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
      */
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createSurveyTables(db)
+        if (oldVersion in 2 until 3) addSurveyLocation(db)
+        if (oldVersion < 4) createHopTable(db)
+    }
+
+    /**
+     * v3 — where and when a survey was taken. ALTER TABLE ADD COLUMN rather than
+     * a rebuild, so a phone already holding surveys keeps them.
+     */
+    private fun addSurveyLocation(db: SQLiteDatabase) {
+        db.execSQL("ALTER TABLE survey ADD COLUMN lat REAL")
+        db.execSQL("ALTER TABLE survey ADD COLUMN lon REAL")
+        db.execSQL("ALTER TABLE survey ADD COLUMN captured_at INTEGER NOT NULL DEFAULT 0")
     }
 
     /**
@@ -191,6 +238,6 @@ class SetuDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
 
     companion object {
         const val NAME = "setu.db"
-        const val VERSION = 2
+        const val VERSION = 4
     }
 }

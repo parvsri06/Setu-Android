@@ -41,6 +41,38 @@ class Prefs(context: Context) {
         get() = p.getString("theme_mode", "system") ?: "system"
         set(v) = p.edit().putString("theme_mode", v).apply()
 
+    /**
+     * The rescuer private key, hex, or empty on an ordinary phone.
+     *
+     * Its presence is what makes this install a rescuer phone: SOS bodies become
+     * readable and arrivals raise an alert. Stored in the app's private
+     * preferences, which is the same protection the OS gives every other app
+     * secret and is honest about what it is — a credential on a device, not a
+     * hardware-sealed key. See crypto/RescuerKey.kt.
+     */
+    var rescuerKeyHex: String
+        get() = p.getString("rescuer_key", "") ?: ""
+        set(v) = p.edit().putString("rescuer_key", v).apply()
+
+    /** Whether the rescuer has muted the SOS alert sound. */
+    var rescueAlertsOn: Boolean
+        get() = p.getBoolean("rescue_alerts", true)
+        set(v) = p.edit().putBoolean("rescue_alerts", v).apply()
+
+    /**
+     * The authority signing seed, hex, on a phone allowed to publish
+     * announcements.
+     *
+     * Separate from [rescuerKeyHex] on purpose. Reading an SOS and speaking for
+     * the authority are different powers, and a field responder holding the
+     * first has no business gaining the second — a control room can hand out
+     * rescuer keys freely without also handing out the ability to declare an
+     * evacuation route.
+     */
+    var authoritySeedHex: String
+        get() = p.getString("authority_seed", "") ?: ""
+        set(v) = p.edit().putString("authority_seed", v).apply()
+
     /** The contact identifier last used for a check-in. */
     var lastContact: String
         get() = p.getString("last_contact", "") ?: ""
