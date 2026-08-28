@@ -42,6 +42,15 @@ object MsgType {
     const val SURVEY_REF = 0x4
     const val PROFILE_REF = 0x5
 
+    /**
+     * A rescuer asking a phone to make itself findable — scream and flash.
+     * Tier 0: someone is standing over rubble with a handheld scanner.
+     */
+    const val FIND_PING = 0x6
+
+    /** Points at an announcement record on the bulk plane. Outbound information. */
+    const val ANNOUNCE_REF = 0x7
+
     /** Priority tier for a type, per docs/01-architecture.md. */
     fun tierOf(type: Int): Int = when (type) {
         SOS -> 0
@@ -49,6 +58,8 @@ object MsgType {
         RECEIPT -> 2
         SURVEY_REF -> 3
         PROFILE_REF -> 4
+        FIND_PING -> 0
+        ANNOUNCE_REF -> 1
         else -> 4
     }
 
@@ -59,6 +70,11 @@ object MsgType {
         RECEIPT -> 24
         SURVEY_REF -> 14 * 24
         PROFILE_REF -> 30 * 24
+        // A ping is worthless once the rescuer has walked away; a short life
+        // keeps a stale ping from waking a phone hours later and wasting the
+        // battery of someone who is already found.
+        FIND_PING -> 1
+        ANNOUNCE_REF -> 12
         else -> 24
     }
 
@@ -68,6 +84,8 @@ object MsgType {
         RECEIPT -> "RECEIPT"
         SURVEY_REF -> "SURVEY_REF"
         PROFILE_REF -> "PROFILE_REF"
+        FIND_PING -> "FIND_PING"
+        ANNOUNCE_REF -> "ANNOUNCE_REF"
         else -> "UNKNOWN($type)"
     }
 }

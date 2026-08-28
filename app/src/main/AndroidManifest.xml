@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
+    <!-- Rescue beacon mode. A buried phone screams, flashes and vibrates so a
+         rescuer can find it; VIBRATE is a normal permission granted at install.
+         Torch needs no permission: setTorchMode is not opening the camera. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Pre-31 handsets still gate BLE behind the legacy Bluetooth permissions. -->
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
@@ -65,5 +70,18 @@
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Hands this app's own APK to a nearby phone over Bluetooth. Scoped to
+             one cache directory, so nothing else in the app is reachable. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
 </manifest>

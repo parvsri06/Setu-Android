@@ -31,6 +31,30 @@ data class CarriedItem(
 )
 
 /** Everything the UI is allowed to know about the relay. */
+/**
+ * An SOS as a rescuer needs to see it, from anyone — this device or a stranger
+ * four hops away. [MyMessage] deliberately only covers what this phone sent, so
+ * it cannot answer "who is calling for help nearby".
+ *
+ * The body stays sealed here. Only [`in`.setu.relay.ui.RescueScreen], holding
+ * the rescuer key, can open it; the state object carries the same opaque bytes
+ * every relay carries.
+ */
+data class SosCall(
+    val idHex: String,
+    val originKeyIdHex: String,
+    val hopCount: Int,
+    /** Sender's device clock. Untrusted — docs/04-security-model.md. */
+    val createdAt: Long,
+    /** When this phone actually heard it. Trustworthy. */
+    val receivedAt: Long,
+    val isMine: Boolean,
+    val sealedBody: ByteArray,
+) {
+    override fun equals(other: Any?): Boolean = this === other
+    override fun hashCode(): Int = idHex.hashCode()
+}
+
 data class RelayState(
     val identityKeyId: String = "",
     /** Distinct devices heard in the last 60 s. The single most reassuring number. */
@@ -38,6 +62,25 @@ data class RelayState(
     val carrying: Int = 0,
     val totalStored: Int = 0,
     val myMessages: List<MyMessage> = emptyList(),
+
+    /** Every SOS heard, from anyone. Populated only in rescue mode. */
+    val sosCalls: List<SosCall> = emptyList(),
+    /** True when a rescuer key has been entered on this phone. */
+    val rescueMode: Boolean = false,
+
+    // -------------------------------------------------------- rescue tooling
+    /** This phone is screaming and flashing because a rescuer pinged it. */
+    val findMeActive: Boolean = false,
+    /** Wall clock at which the current scream stops. */
+    val findMeEndsAt: Long = 0L,
+    /** Battery is low enough that only a position beacon runs. */
+    val lastBreath: Boolean = false,
+    /** Phones nobody has heard from recently. A search list. */
+    val goneQuiet: Int = 0,
+    /** Announcements held, whether or not they verified. */
+    val announcements: Int = 0,
+    /** Observations recorded — the raw material for trails and search boxes. */
+    val observations: Int = 0,
     val scanning: Boolean = false,
     val bluetoothOn: Boolean = false,
     /** The system Location toggle, not the permission. BLE scans return
@@ -57,6 +100,17 @@ data class RelayState(
     val batteryPct: Int = 100,
     val wallClockJumped: Boolean = false,
     val hardwareBackedKey: Boolean = true,
+
+    // ------------------------------------------------------------ bulk plane
+    /** Records held, including ones sealed to someone else and unreadable here. */
+    val recordsHeld: Int = 0,
+    /** Records being carried for other people. Opaque to this device. */
+    val recordsForOthers: Int = 0,
+    val recordsReceived: Long = 0,
+    val recordsPushed: Long = 0,
+    val bulkSessions: Long = 0,
+    val bulkServerUp: Boolean = false,
+    val bulkLastResult: String? = null,
     val radioError: String? = null,
     val serviceRunning: Boolean = false,
 )

@@ -85,7 +85,11 @@ fun SurveyScreen(
     // Debounced autosave. Keyed on the draft, so each edit restarts the timer and
     // a burst of typing costs one write rather than one per keystroke.
     LaunchedEffect(draft) {
-        if (draft.name.isBlank() && draft.village.isBlank() && draft.aadhaar.isBlank()) return@LaunchedEffect
+        // No "is anything filled in yet" guard. The row is written from the
+        // first pause in typing even when every field is still empty, so a
+        // survey exists in the table from the moment it is started and shows as
+        // Pending rather than not existing at all. A surveyor interrupted on the
+        // first question still leaves a trace that someone was asked.
         delay(700)
         withContext(Dispatchers.Default) { host.saveDraft(draft) }
         savedId = draft.surveyId
@@ -153,7 +157,7 @@ fun SurveyScreen(
                     BigButton(
                         label = stringResource(R.string.survey_save_draft),
                         iconRes = R.drawable.ic_carry,
-                        container = MaterialTheme.colorScheme.surface,
+                        container = MaterialTheme.colorScheme.surfaceVariant,
                         content = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     ) {
@@ -442,7 +446,7 @@ private fun CasualtiesStep(d: SurveyDraft, set: (SurveyDraft) -> Unit) {
     BigButton(
         label = stringResource(R.string.survey_add_person),
         iconRes = R.drawable.ic_relay,
-        container = MaterialTheme.colorScheme.surface,
+        container = MaterialTheme.colorScheme.surfaceVariant,
         content = MaterialTheme.colorScheme.onSurface,
     ) { set(d.copy(people = d.people + PersonDraft())) }
 }
@@ -596,7 +600,7 @@ private fun SavedStep(surveyId: String, onNew: () -> Unit, onDone: () -> Unit) {
         BigButton(
             label = stringResource(R.string.survey_done),
             iconRes = R.drawable.ic_status_delivered,
-            container = MaterialTheme.colorScheme.surface,
+            container = MaterialTheme.colorScheme.surfaceVariant,
             content = MaterialTheme.colorScheme.onSurface,
             onClick = onDone,
         )

@@ -25,4 +25,22 @@ object Keys {
     /** X25519 public key that bulk-plane survey bodies seal to. Phase 5. */
     val BACKEND_PUBLIC: ByteArray =
         Codec.unhex("cdb985aff27f1c701888264060049470f4e147977db988bbb564d0e74541ec73")
+
+    /**
+     * Ed25519 public key that announcements are verified against.
+     *
+     * This is the one key in the app whose job is **authenticity rather than
+     * secrecy**, and it is the reason announcements are usable at all. Without
+     * it any install could broadcast "the bridge is safe" and the feature would
+     * be a rumour amplifier with better reach than word of mouth.
+     *
+     * Only the public half is here. The private seed lives with whoever is
+     * authorised to speak — a district control room, not a handset — and is
+     * entered on a rescuer phone to compose. An announcement that fails this
+     * check is still shown, marked unverified: in a blackout an unverified
+     * message may well be true, and hiding it is its own kind of lie. It simply
+     * never gets to look official.
+     */
+    val AUTHORITY_PUBLIC: ByteArray =
+        Codec.unhex("6fa0a3ada6c430e050789afcc27df62ca0928ce5f740a3d7ff7f08d84a5f7291")
 }

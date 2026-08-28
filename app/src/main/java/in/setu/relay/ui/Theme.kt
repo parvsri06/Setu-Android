@@ -33,6 +33,23 @@ import androidx.compose.ui.unit.sp
  * green appears anywhere a user can reach without a confirmed receipt, the
  * colour stops meaning anything. Every state still carries an icon and a word,
  * so colour is never the only signal.
+ *
+ * ### Contrast
+ *
+ * Values come from `Setu-docs/design/tokens.md`. Body text is 18 sp regular,
+ * which is roughly 13.5 pt and therefore **not** WCAG "large text", so every
+ * text pair needs 4.5:1 rather than 3:1. Two pairs in the design fall short and
+ * are kept as specified rather than quietly altered:
+ *
+ * - light `carried` on the page ground — 4.25:1 (`#A86200` on `#F1F2F3`).
+ *   On a raised surface it is fine at 4.76:1.
+ * - dark `sos` as text on a raised surface — 4.15:1 (`#E0453E` on `#191C1F`).
+ *   On the page ground it is fine at 4.62:1.
+ *
+ * Both are text-colour uses only; the fills those tokens paint, with their
+ * matching `on-` colours, all clear AA comfortably. Neither affects a state a
+ * user has to read to stay safe, but both are worth a design decision rather
+ * than a code workaround.
  */
 @Immutable
 data class SetuColors(
@@ -56,34 +73,40 @@ data class SetuColors(
     val muted: Color,
 )
 
+// Values from Setu-docs/design/tokens.md, verified against the swatches in
+// design/light/00a-colour-tokens.png — all ten sampled pixels match the table.
+//
+// The design names one colour per role; this object keeps the fill and the text
+// form as separate fields, so both take the same token value.
 private val LightColors = SetuColors(
-    sos = Color(0xFFC62828),
+    sos = Color(0xFFC22B22),
     onSos = Color(0xFFFFFFFF),
-    sosText = Color(0xFFC62828),
-    carried = Color(0xFF9A5B00),
+    sosText = Color(0xFFC22B22),
+    carried = Color(0xFFA86200),
     onCarried = Color(0xFFFFFFFF),
-    carriedText = Color(0xFF9A5B00),
-    delivered = Color(0xFF1B7F3B),
+    // 4.25:1 against the page — see the contrast note on SetuColors.
+    carriedText = Color(0xFFA86200),
+    delivered = Color(0xFF1A7A44),
     onDelivered = Color(0xFFFFFFFF),
-    deliveredText = Color(0xFF1B7F3B),
-    warnText = Color(0xFF9A5B00),
-    muted = Color(0xFF5A6270),
+    deliveredText = Color(0xFF1A7A44),
+    warnText = Color(0xFF8A4A10),
+    muted = Color(0xFF5B6165),
 )
 
-// On a dark ground the same hues have to invert: fills go lighter with dark
-// content, text goes lighter still. Every pair below clears WCAG AA at body size.
+// On a dark ground the same hues invert: fills go lighter with dark content.
 private val DarkColors = SetuColors(
-    sos = Color(0xFFFF6B6B),
+    sos = Color(0xFFE0453E),
     onSos = Color(0xFF2A0505),
-    sosText = Color(0xFFFF8A85),
-    carried = Color(0xFFF2A93B),
+    // 4.15:1 on a raised surface — see the contrast note on SetuColors.
+    sosText = Color(0xFFE0453E),
+    carried = Color(0xFFE3982A),
     onCarried = Color(0xFF2A1A00),
-    carriedText = Color(0xFFF2A93B),
-    delivered = Color(0xFF4ED17F),
+    carriedText = Color(0xFFE3982A),
+    delivered = Color(0xFF4DBD7B),
     onDelivered = Color(0xFF06240F),
-    deliveredText = Color(0xFF4ED17F),
-    warnText = Color(0xFFF2A93B),
-    muted = Color(0xFF99A2AE),
+    deliveredText = Color(0xFF4DBD7B),
+    warnText = Color(0xFFE0A04B),
+    muted = Color(0xFF9EA5A9),
 )
 
 private val LocalSetuColors = staticCompositionLocalOf { LightColors }
@@ -95,6 +118,12 @@ object Setu {
 
     /** Wet fingers, shaking hands. Minimum touch target — docs/07-ui-spec.md. */
     val Touch = 64.dp
+
+    /**
+     * Primary buttons. Between a row and the SOS control, per the metrics in
+     * `Setu-docs/design/tokens.md`: 64 dp rows, 72 dp primary buttons, 88 dp SOS.
+     */
+    val Primary = 72.dp
 
     /** SOS is bigger still. */
     val SosTouch = 88.dp
@@ -113,35 +142,39 @@ enum class ThemeMode(val key: String) {
     }
 }
 
+// The design's `surface` is the page ground and `surface-raised` is a card, so
+// they map to `surface`/`background` and `surfaceVariant` respectively.
+// `error` follows `sos`: Material draws error states with it, and a failure is
+// the one other place that has earned the red.
 private val Light = lightColorScheme(
-    primary = Color(0xFF1F6FEB),
+    primary = Color(0xFF1F5C9E),
     onPrimary = Color(0xFFFFFFFF),
     secondary = Color(0xFF41556F),
     onSecondary = Color(0xFFFFFFFF),
-    background = Color(0xFFF5F7FA),
-    onBackground = Color(0xFF171A1F),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF171A1F),
-    surfaceVariant = Color(0xFFECEFF3),
-    onSurfaceVariant = Color(0xFF5A6270),
-    outline = Color(0xFFD5DAE1),
-    error = Color(0xFFC62828),
+    background = Color(0xFFF1F2F3),
+    onBackground = Color(0xFF15181A),
+    surface = Color(0xFFF1F2F3),
+    onSurface = Color(0xFF15181A),
+    surfaceVariant = Color(0xFFFFFFFF),
+    onSurfaceVariant = Color(0xFF5B6165),
+    outline = Color(0xFFC7CBCF),
+    error = Color(0xFFC22B22),
     onError = Color(0xFFFFFFFF),
 )
 
 private val Dark = darkColorScheme(
-    primary = Color(0xFF6EA8FF),
+    primary = Color(0xFF79AEE9),
     onPrimary = Color(0xFF0A1B2E),
     secondary = Color(0xFFA9BBD3),
     onSecondary = Color(0xFF12202F),
-    background = Color(0xFF0E1116),
-    onBackground = Color(0xFFE9EDF2),
-    surface = Color(0xFF1A1F26),
-    onSurface = Color(0xFFE9EDF2),
-    surfaceVariant = Color(0xFF232A33),
-    onSurfaceVariant = Color(0xFF99A2AE),
-    outline = Color(0xFF2A313A),
-    error = Color(0xFFFF6B6B),
+    background = Color(0xFF0E1012),
+    onBackground = Color(0xFFF0F2F3),
+    surface = Color(0xFF0E1012),
+    onSurface = Color(0xFFF0F2F3),
+    surfaceVariant = Color(0xFF191C1F),
+    onSurfaceVariant = Color(0xFF9EA5A9),
+    outline = Color(0xFF383E43),
+    error = Color(0xFFE0453E),
     onError = Color(0xFF2A0505),
 )
 

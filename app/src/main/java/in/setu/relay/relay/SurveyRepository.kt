@@ -1,11 +1,10 @@
 package `in`.setu.relay.relay
 
-import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import `in`.setu.relay.crypto.AadhaarId
 import `in`.setu.relay.crypto.Keys
 import `in`.setu.relay.crypto.SealedBox
-import `in`.setu.relay.store.SetuDb
 import `in`.setu.relay.store.Survey
 import `in`.setu.relay.store.SurveyStatus
 import `in`.setu.relay.store.SurveyStore
@@ -19,10 +18,27 @@ import `in`.setu.relay.wire.SurveyRecord
  * main thread, and only when the digits are complete and have actually changed —
  * autosave fires on every pause in typing and must not re-seal each time.
  */
-class SurveyRepository(context: Context, private val identityKeyId: ByteArray) {
+class SurveyRepository(
+    /**
+     * The relay's database, not a fresh one.
+     *
+     * This used to open its own `SetuDb`, which meant a second SQLiteOpenHelper
+     * and therefore a second connection pool on the same file. That was survivable
+     * while surveys were the only writer. It stopped being survivable once the
+     * bulk plane began writing `record` from a GATT callback thread: two pools
+     * writing one table without WAL is how `SQLiteDatabaseLockedException` shows
+     * up, and it would surface as a survey silently failing to save at exactly
+     * the moment a peer connected.
+     */
+    private val db: SQLiteDatabase,
+    private val identityKeyId: ByteArray,
+    /** Only for the location fix taken when a survey is completed. */
+    context: android.content.Context,
+) {
 
-    private val db = SetuDb(context.applicationContext).writableDatabase
     private val store = SurveyStore(db)
+    private val records = `in`.setu.relay.store.RecordStore(db)
+    private val locator = Locator(context)
 
     init {
         // Clears child rows stranded on any phone that ran the build where a
@@ -54,6 +70,30 @@ class SurveyRepository(context: Context, private val identityKeyId: ByteArray) {
      * The completed save passes true, and that is the single point where the
      * unique index decides.
      */
+    /**
+     * A position and a time, captured automatically at save time.
+     *
+     * Blocking, with a short ceiling, because the caller is already off the main
+     * thread and a surveyor pressing Save expects the record to be finished when
+     * the screen changes. No fix is a normal outcome indoors — the record is
+     * saved anyway with NaN, and the table shows Pending rather than inventing
+     * a coordinate.
+     */
+    fun stampNow(survey: Survey, timeoutMs: Long = 6_000L): Survey {
+        val latch = java.util.concurrent.CountDownLatch(1)
+        var fix: android.location.Location? = null
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            locator.fixOnce(timeoutMs) { fix = it; latch.countDown() }
+        }
+        runCatching { latch.await(timeoutMs + 1_000L, java.util.concurrent.TimeUnit.MILLISECONDS) }
+        val now = System.currentTimeMillis()
+        return survey.copy(
+            lat = fix?.latitude ?: Double.NaN,
+            lon = fix?.longitude ?: Double.NaN,
+            capturedAt = if (survey.capturedAt > 0) survey.capturedAt else now,
+        )
+    }
+
     fun save(survey: Survey, aadhaarDigits: String, claimAadhaar: Boolean): Boolean {
         val sealed = sealAadhaar(aadhaarDigits)
         val hash = if (claimAadhaar && AadhaarId.isWellFormed(aadhaarDigits)) {
@@ -83,8 +123,12 @@ class SurveyRepository(context: Context, private val identityKeyId: ByteArray) {
      * demonstrable rather than aspirational.
      */
     fun packForRelay(survey: Survey): Int {
-        val plain = SurveyRecord.encode(survey)
-        val sealed = SealedBox.seal(Keys.BACKEND_PUBLIC, plain)
+        // Stored as encoded-but-not-sealed. The Aadhaar inside is already sealed
+        // to the backend key; everything else is meant to be readable by the
+        // phones that carry it, so a district officer can actually see what the
+        // field workers collected. See D32 in wire/SurveyRecord.kt.
+        val sealed = SurveyRecord.encode(survey)
+        val plain = sealed
         val id = SurveyRecord.uuidBytes(survey.surveyId)
         val values = android.content.ContentValues().apply {
             put("record_id", id)
@@ -99,9 +143,35 @@ class SurveyRepository(context: Context, private val identityKeyId: ByteArray) {
             values,
             android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE,
         )
-        Log.i(TAG, "survey record packed: ${plain.size} B plain, ${sealed.size} B sealed")
+        Log.i(TAG, "survey record packed: ${sealed.size} B")
         return sealed.size
     }
+
+    /**
+     * Packs a record for every completed survey that does not have one.
+     *
+     * Needed because the record format changed in v2 and because surveys saved
+     * before packing existed have no record at all. Without this a phone can be
+     * holding surveys and still advertise an empty digest, which looks exactly
+     * like the bulk plane being broken.
+     */
+    fun ensureRecordsPacked(): Int {
+        var packed = 0
+        for (s in store.all()) {
+            if (s.status == SurveyStatus.DRAFT) continue
+            val id = SurveyRecord.uuidBytes(s.surveyId)
+            if (records.has(id)) continue
+            runCatching { packForRelay(s) }.onSuccess { packed++ }
+        }
+        if (packed > 0) Log.i(TAG, "packed $packed survey record(s) for relay")
+        return packed
+    }
+
+    /** Every survey this phone received from a peer, newest first. */
+    fun received(): List<SurveyRecord.Decoded> = records.allFromPeers()
+        .mapNotNull { SurveyRecord.decodeOrNull(it) }
+
+    fun receivedCount(): Int = records.countForOthers()
 
     private fun sealAadhaar(digits: String): ByteArray? {
         if (!AadhaarId.isWellFormed(digits)) return null

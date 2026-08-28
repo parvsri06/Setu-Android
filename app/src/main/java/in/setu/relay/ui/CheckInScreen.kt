@@ -109,7 +109,7 @@ private fun StatusChip(
         modifier
             .height(Setu.Touch)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (selected) accent else MaterialTheme.colorScheme.surface)
+            .background(if (selected) accent else MaterialTheme.colorScheme.surfaceVariant)
             .clickable(onClick = onClick)
             .padding(8.dp),
         contentAlignment = Alignment.Center,

@@ -48,10 +48,12 @@ fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeMode: (ThemeMode) -> Unit,
     onToggleRelay: () -> Unit,
+    onRescue: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
     var language by remember { mutableStateOf(prefs.language) }
+    var alertsOn by remember { mutableStateOf(prefs.rescueAlertsOn) }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         ScreenHeader(stringResource(R.string.settings_title), onBack)
@@ -97,6 +99,43 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        // ------------------------------------------------------------ rescue
+        Text(stringResource(R.string.settings_rescue), style = MaterialTheme.typography.titleMedium)
+        BigButton(
+            label = stringResource(
+                if (prefs.rescuerKeyHex.isEmpty()) R.string.rescue_unlock else R.string.rescue_active,
+            ),
+            iconRes = R.drawable.ic_status_delivered,
+            container = MaterialTheme.colorScheme.surfaceVariant,
+            content = MaterialTheme.colorScheme.onSurface,
+            onClick = onRescue,
+        )
+
+        // ------------------------------------------------- find-me alerts
+        //
+        // A find ping cannot be authenticated until key exchange lands, so any
+        // device in radio range can make this phone scream. The rate limit
+        // bounds that; this switch is the user's own way out of it.
+        Text(stringResource(R.string.settings_alerts), style = MaterialTheme.typography.titleMedium)
+        SetuCard {
+            Text(
+                stringResource(R.string.settings_alerts_note),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        BigButton(
+            label = stringResource(
+                if (alertsOn) R.string.settings_alerts_on else R.string.settings_alerts_off,
+            ),
+            iconRes = if (alertsOn) R.drawable.ic_sos else R.drawable.ic_status_expired,
+            container = MaterialTheme.colorScheme.surfaceVariant,
+            content = MaterialTheme.colorScheme.onSurface,
+        ) {
+            alertsOn = !alertsOn
+            prefs.rescueAlertsOn = alertsOn
+        }
+
         // ------------------------------------------------------------- relay
         Text(stringResource(R.string.settings_relay), style = MaterialTheme.typography.titleMedium)
         SetuCard {
@@ -114,7 +153,7 @@ fun SettingsScreen(
         BigButton(
             label = stringResource(if (relayWanted) R.string.home_stop else R.string.home_start),
             iconRes = if (relayWanted) R.drawable.ic_status_expired else R.drawable.ic_relay,
-            container = MaterialTheme.colorScheme.surface,
+            container = MaterialTheme.colorScheme.surfaceVariant,
             content = MaterialTheme.colorScheme.onSurface,
             onClick = onToggleRelay,
         )
@@ -137,7 +176,7 @@ private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
                 if (selected) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                 } else {
-                    MaterialTheme.colorScheme.surface
+                    MaterialTheme.colorScheme.surfaceVariant
                 },
             )
             .clickable(onClick = onClick)

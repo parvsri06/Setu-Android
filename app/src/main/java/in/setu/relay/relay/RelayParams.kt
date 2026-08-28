@@ -20,6 +20,36 @@ object RelayParams {
     const val BATTERY_FLOOR_PCT = 15
 
     /**
+     * Below this, the phone stops relaying entirely and becomes a marker.
+     *
+     * Deliberately far below BATTERY_FLOOR_PCT, which only silences the lower
+     * tiers. This is the point where helping others has to stop mattering, so
+     * that being findable can start.
+     */
+    /**
+     * How long a phone refuses to answer another find ping.
+     *
+     * A find ping cannot be authenticated until key exchange lands, so this is
+     * the control that bounds its cost: a flood of pings produces one burst,
+     * not a continuous alarm. Long enough that a battery cannot be drained by
+     * repetition, short enough that a rescuer who has moved a few metres and
+     * re-pings still gets an answer.
+     */
+    const val FIND_COOLDOWN_MS = 90_000L
+
+    const val LAST_BREATH_PCT = 5
+
+    /** One position beacon a minute, for days rather than hours. */
+    const val LAST_BREATH_INTERVAL_MS = 60_000L
+
+    /**
+     * A long burst, because it happens rarely. At one beacon a minute a short
+     * burst would very often fall entirely outside a scanning peer's window,
+     * and this is the one message that must not be missed.
+     */
+    const val LAST_BREATH_BURST_MS = 1_500L
+
+    /**
      * (message age upper bound, advertising interval).
      * Never zero, never infinite — a carried message keeps whispering until TTL.
      * Regression guard for D4 in MEMORY.md.

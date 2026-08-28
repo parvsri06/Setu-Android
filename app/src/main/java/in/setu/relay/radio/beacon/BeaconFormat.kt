@@ -108,4 +108,13 @@ object BeaconFormat {
         if (data[0] != MAGIC_0 || data[1] != MAGIC_P) return null
         return data.copyOfRange(2, 10)
     }
+
+    /**
+     * True when the advertiser is running a GATT server worth connecting to.
+     *
+     * Only meaningful once [unwrapPresence] has confirmed the payload is a Setu
+     * presence beacon.
+     */
+    fun presenceHasBulk(data: ByteArray): Boolean =
+        data.size == PRESENCE_SIZE && (data[10].toInt() and PRESENCE_FLAG_BULK) != 0
 }

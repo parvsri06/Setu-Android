@@ -64,6 +64,12 @@ class SurveyStore(private val db: SQLiteDatabase) {
                     put("camp_name", survey.campName)
                     put("camp_location", survey.campLocation)
                     put("needs", survey.needs)
+
+                    // NaN is not representable in SQLite REAL, so an absent fix
+                    // is stored as NULL and read back as NaN.
+                    if (survey.lat.isNaN()) putNull("lat") else put("lat", survey.lat)
+                    if (survey.lon.isNaN()) putNull("lon") else put("lon", survey.lon)
+                    put("captured_at", survey.capturedAt)
                 }
                 // Update-then-insert, NOT insertWithOnConflict(CONFLICT_REPLACE).
                 //
@@ -229,6 +235,9 @@ class SurveyStore(private val db: SQLiteDatabase) {
         campName = c.str("camp_name"),
         campLocation = c.str("camp_location"),
         needs = c.str("needs"),
+        lat = c.dbl("lat"),
+        lon = c.dbl("lon"),
+        capturedAt = c.long("captured_at"),
     )
 
     private fun Cursor.str(name: String): String =
@@ -239,6 +248,9 @@ class SurveyStore(private val db: SQLiteDatabase) {
 
     private fun Cursor.long(name: String): Long =
         getColumnIndex(name).let { if (it < 0 || isNull(it)) 0L else getLong(it) }
+
+    private fun Cursor.dbl(name: String): Double =
+        getColumnIndex(name).let { if (it < 0 || isNull(it)) Double.NaN else getDouble(it) }
 
     private fun Cursor.blob(name: String): ByteArray? =
         getColumnIndex(name).let { if (it < 0 || isNull(it)) null else getBlob(it) }

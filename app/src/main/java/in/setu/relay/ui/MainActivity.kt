@@ -50,6 +50,8 @@ import `in`.setu.relay.relay.SurveyRepository
 import `in`.setu.relay.store.Survey
 import `in`.setu.relay.ui.survey.SurveyDraft
 import `in`.setu.relay.ui.survey.SurveyHost
+import `in`.setu.relay.ui.survey.ReceivedSurveyDetailScreen
+import `in`.setu.relay.ui.survey.SurveyDetailScreen
 import `in`.setu.relay.ui.survey.SurveyListScreen
 import `in`.setu.relay.ui.survey.SurveyScreen
 import kotlinx.coroutines.Dispatchers
@@ -58,6 +60,7 @@ import kotlinx.coroutines.withContext
 
 enum class Screen {
     FirstRun, Home, Sos, CheckIn, Carrying, Diagnostics, Rescuer, Settings, Surveys, Survey,
+    SurveyDetail, ReceivedDetail, Rescue, ShareApp, RescueTools, Announce, SosDetail,
 }
 
 class MainActivity : ComponentActivity() {
@@ -155,7 +158,8 @@ private fun SetuApp(
             Screen.Rescuer -> Screen.Diagnostics
             // The wizard handles its own step-by-step back; reaching here means
             // it is on its first step, so leaving goes to the list it came from.
-            Screen.Survey -> Screen.Surveys
+            Screen.SurveyDetail, Screen.ReceivedDetail, Screen.Survey -> Screen.Surveys
+            Screen.SosDetail -> Screen.Sos
             else -> Screen.Home
         }
     }
@@ -170,15 +174,39 @@ private fun SetuApp(
     // Surveys live below the UI, like the relay does. Built once and off the
     // main thread: opening the database and deriving the identity key id are
     // both too slow to do during composition.
-    val surveys = remember { SurveyRepository(context.applicationContext, engine.identity.keyId) }
+    val surveys = remember { SurveyRepository(engine.store.database, engine.identity.keyId, context.applicationContext) }
     var surveyList by remember { mutableStateOf<List<Survey>>(emptyList()) }
+    var receivedList by remember {
+        mutableStateOf<List<`in`.setu.relay.wire.SurveyRecord.Decoded>>(emptyList())
+    }
     var openSurveyId by rememberSaveable { mutableStateOf<String?>(null) }
+    var openSosMsgId by rememberSaveable { mutableStateOf<String?>(null) }
     var surveyReload by remember { mutableStateOf(0) }
+    var rescueReload by remember { mutableStateOf(0) }
 
     LaunchedEffect(surveyReload, screen) {
         if (screen == Screen.Surveys || screen == Screen.Home) {
-            surveyList = withContext(Dispatchers.Default) { surveys.all() }
+            withContext(Dispatchers.Default) {
+                // Older builds packed records in a format peers can no longer
+                // read, and surveys saved before packing existed have none at
+                // all. Both would leave this phone advertising an empty digest
+                // while visibly holding surveys.
+                surveys.ensureRecordsPacked()
+                val local = surveys.all()
+                val fromPeers = surveys.received()
+                withContext(Dispatchers.Main) {
+                    surveyList = local
+                    receivedList = fromPeers
+                }
+            }
         }
+    }
+
+    // Entering or clearing the rescuer key changes what publish() builds, so
+    // the engine has to be asked for a fresh snapshot rather than waiting for
+    // the next radio event.
+    LaunchedEffect(rescueReload) {
+        if (rescueReload > 0) withContext(Dispatchers.Default) { engine.publish() }
     }
 
     val surveyHost = remember {
@@ -195,7 +223,11 @@ private fun SetuApp(
 
             override fun saveComplete(draft: SurveyDraft): Boolean {
                 if (surveys.isDuplicate(draft.aadhaar, draft.surveyId)) return false
-                val row = draft.toSurvey(`in`.setu.relay.store.SurveyStatus.COMPLETE, null)
+                // Where and when, attached automatically — the surveyor never
+                // types a coordinate and an officer always needs one.
+                val row = surveys.stampNow(
+                    draft.toSurvey(`in`.setu.relay.store.SurveyStatus.COMPLETE, null),
+                )
                 if (!surveys.save(row, draft.aadhaar, claimAadhaar = true)) return false
                 // Pack the relay subset now so it is verifiably sealed and the
                 // right size, even though the bulk plane that carries it is
@@ -227,6 +259,13 @@ private fun SetuApp(
         }
     }
 
+    // Home scrolls its own body between a fixed app bar and a fixed bottom bar,
+    // so it must NOT sit inside this scroller: a `weight` inside an infinitely
+    // tall parent resolves to zero height, which collapsed the entire Home body
+    // to nothing while both bars still drew. It also supplies its own padding,
+    // because its bars run edge to edge.
+    val ownsItsScroll = screen == Screen.Home
+
     Column(
         Modifier
             .fillMaxSize()
@@ -234,8 +273,8 @@ private fun SetuApp(
             // the header sits under the status bar and the last button under the
             // gesture bar. Insets first, then scroll, then content padding.
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .then(if (ownsItsScroll) Modifier else Modifier.verticalScroll(rememberScrollState()))
+            .then(if (ownsItsScroll) Modifier else Modifier.padding(16.dp)),
     ) {
         when (screen) {
             Screen.FirstRun -> FirstRunScreen(
@@ -263,7 +302,15 @@ private fun SetuApp(
                 onGo = { screen = it },
             )
 
-            Screen.Sos -> SosScreen(engine, state) { screen = Screen.Home }
+            Screen.Sos -> SosScreen(
+                engine = engine,
+                state = state,
+                onAddDetail = { msgIdHex ->
+                    openSosMsgId = msgIdHex
+                    screen = Screen.SosDetail
+                },
+                onBack = { screen = Screen.Home },
+            )
             Screen.CheckIn -> CheckInScreen(engine, state, prefs) { screen = Screen.Home }
             Screen.Carrying -> CarryingScreen(engine, state) { screen = Screen.Home }
             Screen.Diagnostics -> DiagnosticsScreen(engine, state, { screen = Screen.Rescuer }) { screen = Screen.Home }
@@ -271,8 +318,63 @@ private fun SetuApp(
 
             Screen.Surveys -> SurveyListScreen(
                 surveys = surveyList,
-                onOpen = { openSurveyId = it; screen = Screen.Survey },
+                received = receivedList,
+                // Tapping opens the table, not the wizard. Reading what was
+                // collected is the common case; editing is a deliberate second
+                // step from there.
+                onOpen = { openSurveyId = it; screen = Screen.SurveyDetail },
+                onOpenReceived = { openSurveyId = it; screen = Screen.ReceivedDetail },
                 onNew = { openSurveyId = null; screen = Screen.Survey },
+                onBack = { screen = Screen.Home },
+            )
+
+            Screen.SurveyDetail -> {
+                val s = surveyList.firstOrNull { it.surveyId == openSurveyId }
+                if (s == null) {
+                    screen = Screen.Surveys
+                } else {
+                    SurveyDetailScreen(
+                        survey = s,
+                        editable = true,
+                        onEdit = { screen = Screen.Survey },
+                        onBack = { screen = Screen.Surveys },
+                    )
+                }
+            }
+
+            Screen.ReceivedDetail -> {
+                val r = receivedList.firstOrNull { it.surveyId == openSurveyId }
+                if (r == null) {
+                    screen = Screen.Surveys
+                } else {
+                    ReceivedSurveyDetailScreen(r) { screen = Screen.Surveys }
+                }
+            }
+
+            Screen.ShareApp -> ShareAppScreen { screen = Screen.Home }
+
+            Screen.RescueTools -> RescueToolsScreen(engine, state) { screen = Screen.Home }
+
+            Screen.Announce -> AnnounceScreen(engine, prefs) { screen = Screen.Home }
+
+            Screen.SosDetail -> {
+                val id = openSosMsgId
+                if (id == null) {
+                    screen = Screen.Sos
+                } else {
+                    SosDetailScreen(
+                        engine = engine,
+                        msgIdHex = id,
+                        onDone = { screen = Screen.Sos },
+                        onBack = { screen = Screen.Sos },
+                    )
+                }
+            }
+
+            Screen.Rescue -> RescueScreen(
+                prefs = prefs,
+                state = state,
+                onKeyChanged = { rescueReload++ },
                 onBack = { screen = Screen.Home },
             )
 
@@ -291,6 +393,7 @@ private fun SetuApp(
                 themeMode = themeMode,
                 onThemeMode = onThemeMode,
                 onToggleRelay = toggleRelay,
+                onRescue = { screen = Screen.Rescue },
                 onBack = { screen = Screen.Home },
             )
         }

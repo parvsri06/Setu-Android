@@ -45,6 +45,16 @@ class MessageStore(context: Context) {
 
     private val db: SQLiteDatabase get() = helper.writableDatabase
 
+    /**
+     * The one open database, shared with [RecordStore] and [SurveyStore].
+     *
+     * SQLiteOpenHelper hands out a single connection per helper, so opening a
+     * second helper on the same file would give two connections competing for
+     * one write lock. Sharing this is the correct way to add a table-owner
+     * class, not a shortcut.
+     */
+    val database: SQLiteDatabase get() = db
+
     // ------------------------------------------------------------------ seen
 
     /**

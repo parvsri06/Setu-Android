@@ -44,6 +44,31 @@ object Messages {
     fun receipt(identity: Identity, refMsgId: ByteArray, kind: Int, nowSec: Long): Envelope =
         sign(identity, MsgType.RECEIPT, Bodies.receiptBody(refMsgId, kind, nowSec), nowSec)
 
+    /**
+     * A find ping. Unsealed, and it has to be: a buried phone must be able to
+     * read "is anyone there?" without holding any key.
+     */
+    fun findPing(identity: Identity, targetKeyId: ByteArray?, seconds: Int, nowSec: Long): Envelope =
+        sign(
+            identity,
+            MsgType.FIND_PING,
+            Bodies.findPingBody(targetKeyId, seconds, nowSec),
+            nowSec,
+        )
+
+    /**
+     * Points at an announcement on the bulk plane. Unsealed — an evacuation
+     * route is useless if only key holders can learn one was issued. Its
+     * authenticity comes from the authority signature on the record itself.
+     */
+    fun announceRef(identity: Identity, recordId: ByteArray, severity: Int, nowSec: Long): Envelope =
+        sign(
+            identity,
+            MsgType.ANNOUNCE_REF,
+            Bodies.announceBody(recordId, severity, nowSec),
+            nowSec,
+        )
+
     private fun sign(identity: Identity, type: Int, body: ByteArray, nowSec: Long): Envelope {
         require(body.size == Proto.LEN_SEALED_BODY) {
             "sealed_body must be ${Proto.LEN_SEALED_BODY} bytes, got ${body.size}"

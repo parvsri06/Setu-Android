@@ -1,68 +1,83 @@
 package `in`.setu.relay.wire
 
-import `in`.setu.relay.store.Person
 import `in`.setu.relay.store.Survey
 
 /**
  * The part of a survey that travels over the mesh.
  *
- * ### Why this is not the whole survey
+ * ### v3 is deliberately tiny
  *
- * A beacon carries **6 bytes** of plaintext (`sealed_body` is 54 bytes, of which
- * 48 is sealed-box overhead), and growing the 142-byte envelope is forbidden —
- * collision loss is exponential in packet size, D5. So a survey can never ride
- * the beacon plane. It rides the **bulk plane** over GATT as a `SURVEY_REF`
- * pointer plus this record, which is why phase 5 is what makes surveys relay at
- * all.
+ * v2 relayed the address block and every affected person as well. On real
+ * hardware that pushed a record to roughly 700 bytes, and at a 400-byte chunk
+ * with a write-with-response per chunk it needed several round trips per record
+ * — noticeably slow when a surveyor is standing next to someone waiting.
  *
- * Even there, photos and damage description are excluded on purpose. Photo bytes
- * on a radio that also carries SOS traffic would starve the thing that saves
- * lives to move something that can wait for a tower. Those fields go over the
- * internet instead — the transport split the user asked for.
- *
- * ### Encoding
- *
- * Hand-rolled, little-endian, length-prefixed UTF-8, on [Codec]. No JSON and no
- * serialization library, per the dependency allow-list in `CLAUDE.md`; field
- * names would cost more than the values.
+ * v3 carries only what identifies a person and where they were found:
  *
  * ```
  * 0       u8    format version
  * 1..16   16    survey_id (UUID bytes)
- * 17..20  u32   created_at, unix seconds
- * 21      u8    flags: bit0 is_proxy, bit1 proxy_consent
- * 22      u16   aadhaar_sealed length, then that many bytes
+ * 17..20  u32   captured_at, unix seconds
+ * 21      u8    flags: bit0 is_proxy, bit1 proxy_consent, bit2 has GPS fix
+ * 22..25  i32   latitude  x 1e6   (absent when bit2 is clear)
+ * 26..29  i32   longitude x 1e6
+ * 30      u16   aadhaar_sealed length, then that many bytes
  * ...     str   name, father_name, mobile, family_id, aadhaar_last4
- * ...     str   village, district, post_office, police_station, pin
- * ...     u8    person count, then per person:
- *                 u8 status, u8 gender, u8 age, str name, str location
  * ```
  *
- * `str` is a u16 byte length followed by UTF-8.
+ * That is one chunk on any phone that negotiates a sane MTU, so a record is a
+ * single write instead of a conversation.
  *
- * The Aadhaar travels as the **already-sealed** blob from the database rather
- * than as digits. The device never holds the plaintext, so it could not include
- * it even if that were wanted; the backend opens the outer record seal and then
- * this inner one. It costs 48 bytes and means a compromised relay — or a
- * compromised backend *record* key alone — still learns nobody's Aadhaar.
+ * Damage detail, relief camp, the address block and the affected-person list
+ * stay on the phone that collected them. They are not lost — they are simply not
+ * radio traffic, which is the whole transport split.
+ *
+ * ### Who can read this
+ *
+ * The operational fields relay **in the clear** so any phone can list and show
+ * them; the Aadhaar number stays sealed to the backend key inside. See D32. The
+ * GPS is in the clear too, which is a real exposure and the price of the
+ * "where did this come from" requirement — it is a surveyor's working position,
+ * not a vulnerable person's home, and it expires with the record.
  */
 object SurveyRecord {
 
-    const val VERSION = 1
+    /** 3 since the record was cut down to identity, position and time. */
+    const val VERSION = 3
 
     /** The profile this record is packed against, stored beside it in `record`. */
-    const val PROFILE_ID = "survey.assam.v1"
+    const val PROFILE_ID = "survey.assam.v3"
 
     /** Long enough for a real name in Assamese at 3 bytes per character. */
-    const val MAX_FIELD_BYTES = 200
-    const val MAX_PEOPLE = 32
+    const val MAX_FIELD_BYTES = 120
+
+    private const val FLAG_PROXY = 1
+    private const val FLAG_CONSENT = 2
+    private const val FLAG_GPS = 4
+
+    /** Fixed-point scale for coordinates: 1e-6 degrees is about 11 cm. */
+    private const val COORD_SCALE = 1_000_000.0
 
     fun encode(survey: Survey): ByteArray {
         val w = Writer()
         w.u8(VERSION)
         w.bytes(uuidBytes(survey.surveyId))
-        w.u32(survey.createdAt / 1000L)
-        w.u8((if (survey.isProxy) 1 else 0) or (if (survey.proxyConsent) 2 else 0))
+
+        val captured = if (survey.capturedAt > 0) survey.capturedAt else survey.createdAt
+        w.u32(captured / 1000L)
+
+        val hasFix = !survey.lat.isNaN() && !survey.lon.isNaN()
+        var flags = 0
+        if (survey.isProxy) flags = flags or FLAG_PROXY
+        if (survey.proxyConsent) flags = flags or FLAG_CONSENT
+        if (hasFix) flags = flags or FLAG_GPS
+        w.u8(flags)
+
+        // Written even without a fix so the layout stays fixed-width up to the
+        // strings; a reader that skipped four bytes conditionally would be one
+        // off-by-one away from misparsing every later field.
+        w.i32(if (hasFix) Math.round(survey.lat * COORD_SCALE).toInt() else 0)
+        w.i32(if (hasFix) Math.round(survey.lon * COORD_SCALE).toInt() else 0)
 
         val sealed = survey.aadhaarSealed ?: ByteArray(0)
         w.u16(sealed.size)
@@ -73,24 +88,6 @@ object SurveyRecord {
         w.str(survey.mobile)
         w.str(survey.familyId)
         w.str(survey.aadhaarLast4)
-
-        w.str(survey.village)
-        w.str(survey.district)
-        w.str(survey.postOffice)
-        w.str(survey.policeStation)
-        w.str(survey.pin)
-
-        val people = survey.people.take(MAX_PEOPLE)
-        w.u8(people.size)
-        for (p in people) {
-            // -1 means "not answered"; on the wire that is 0xFF, so a reader can
-            // tell an unanswered status from a deliberate "alive".
-            w.u8(if (p.status < 0) 0xFF else p.status)
-            w.u8(if (p.gender < 0) 0xFF else p.gender)
-            w.u8(if (p.age < 0 || p.age > 254) 0xFF else p.age)
-            w.str(p.name)
-            w.str(p.location)
-        }
         return w.toByteArray()
     }
 
@@ -98,11 +95,13 @@ object SurveyRecord {
     fun decodeOrNull(src: ByteArray): Decoded? {
         return try {
             val r = Reader(src)
-            val version = r.u8()
-            if (version != VERSION) return null
+            if (r.u8() != VERSION) return null
             val surveyId = uuidString(r.bytes(16))
-            val createdAt = r.u32()
+            val captured = r.u32()
             val flags = r.u8()
+            val latRaw = r.i32()
+            val lonRaw = r.i32()
+
             val sealedLen = r.u16()
             if (sealedLen > MAX_FIELD_BYTES + 64) return null
             val aadhaarSealed = r.bytes(sealedLen)
@@ -112,52 +111,22 @@ object SurveyRecord {
             val mobile = r.str()
             val familyId = r.str()
             val last4 = r.str()
-
-            val village = r.str()
-            val district = r.str()
-            val postOffice = r.str()
-            val policeStation = r.str()
-            val pin = r.str()
-
-            val count = r.u8()
-            if (count > MAX_PEOPLE) return null
-            val people = buildList {
-                repeat(count) { i ->
-                    val status = r.u8().let { if (it == 0xFF) -1 else it }
-                    val gender = r.u8().let { if (it == 0xFF) -1 else it }
-                    val age = r.u8().let { if (it == 0xFF) -1 else it }
-                    add(
-                        Person(
-                            personId = "$surveyId#$i",
-                            surveyId = surveyId,
-                            ordinal = i,
-                            name = r.str(),
-                            age = age,
-                            gender = gender,
-                            status = status,
-                            location = r.str(),
-                        ),
-                    )
-                }
-            }
             if (!r.atEnd()) return null
+
+            val hasFix = flags and FLAG_GPS != 0
             Decoded(
                 surveyId = surveyId,
-                createdAt = createdAt * 1000L,
-                isProxy = flags and 1 != 0,
-                proxyConsent = flags and 2 != 0,
+                capturedAt = captured * 1000L,
+                isProxy = flags and FLAG_PROXY != 0,
+                proxyConsent = flags and FLAG_CONSENT != 0,
+                lat = if (hasFix) latRaw / COORD_SCALE else Double.NaN,
+                lon = if (hasFix) lonRaw / COORD_SCALE else Double.NaN,
                 aadhaarSealed = aadhaarSealed,
                 aadhaarLast4 = last4,
                 name = name,
                 fatherName = fatherName,
                 mobile = mobile,
                 familyId = familyId,
-                village = village,
-                district = district,
-                postOffice = postOffice,
-                policeStation = policeStation,
-                pin = pin,
-                people = people,
             )
         } catch (e: IndexOutOfBoundsException) {
             null
@@ -166,24 +135,21 @@ object SurveyRecord {
         }
     }
 
-    data class Decoded(
+    class Decoded(
         val surveyId: String,
-        val createdAt: Long,
+        val capturedAt: Long,
         val isProxy: Boolean,
         val proxyConsent: Boolean,
+        val lat: Double,
+        val lon: Double,
         val aadhaarSealed: ByteArray,
         val aadhaarLast4: String,
         val name: String,
         val fatherName: String,
         val mobile: String,
         val familyId: String,
-        val village: String,
-        val district: String,
-        val postOffice: String,
-        val policeStation: String,
-        val pin: String,
-        val people: List<Person>,
     ) {
+        val hasFix: Boolean get() = !lat.isNaN() && !lon.isNaN()
         override fun equals(other: Any?): Boolean = this === other
         override fun hashCode(): Int = surveyId.hashCode()
     }
@@ -204,7 +170,7 @@ object SurveyRecord {
     // --------------------------------------------------------------- codecs
 
     private class Writer {
-        private var buf = ByteArray(512)
+        private var buf = ByteArray(256)
         private var len = 0
 
         private fun need(n: Int) {
@@ -226,17 +192,22 @@ object SurveyRecord {
             need(4); Codec.putU32(buf, len, v); len += 4
         }
 
+        /** Two's complement, so negative latitudes survive the round trip. */
+        fun i32(v: Int) = u32(v.toLong() and 0xFFFFFFFFL)
+
         fun bytes(b: ByteArray) {
             need(b.size); b.copyInto(buf, len); len += b.size
         }
 
         fun str(s: String) {
-            // Truncate on a byte boundary that is also a character boundary, so a
-            // clipped Assamese name is still valid UTF-8 rather than a mojibake tail.
+            // Truncate on a boundary that is also a character boundary, so a
+            // clipped Assamese name stays valid UTF-8 rather than a broken tail.
             var encoded = s.toByteArray(Charsets.UTF_8)
             if (encoded.size > MAX_FIELD_BYTES) {
                 var chars = s.length
-                while (chars > 0 && s.substring(0, chars).toByteArray(Charsets.UTF_8).size > MAX_FIELD_BYTES) {
+                while (chars > 0 &&
+                    s.substring(0, chars).toByteArray(Charsets.UTF_8).size > MAX_FIELD_BYTES
+                ) {
                     chars--
                 }
                 encoded = s.substring(0, chars).toByteArray(Charsets.UTF_8)
@@ -265,6 +236,8 @@ object SurveyRecord {
             require(pos + 4 <= src.size) { "short read" }
             return Codec.getU32(src, pos).also { pos += 4 }
         }
+
+        fun i32(): Int = u32().toInt()
 
         fun bytes(n: Int): ByteArray {
             require(n >= 0 && pos + n <= src.size) { "short read" }
